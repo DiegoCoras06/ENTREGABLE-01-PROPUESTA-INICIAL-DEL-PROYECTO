@@ -10,7 +10,7 @@ La arquitectura se organiza en una estructura de capas, incorporando una capa de
 
 ---
 
-## 1. Diagrama de arquitectura de alto nivel
+## 1. Diagrama de arquitectura 
 
 ```mermaid
 flowchart TB
