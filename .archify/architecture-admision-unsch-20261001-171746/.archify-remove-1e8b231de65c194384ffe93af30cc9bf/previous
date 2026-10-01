@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "ok": false,
+  "command": "finalize",
+  "status": "running",
+  "type": "architecture",
+  "quality": "showcase",
+  "startedAt": "2026-10-01T22:18:52.748Z",
+  "specification": {
+    "path": "C:\\Users\\USUARIO\\OneDrive - unsch.edu.pe\\Escritorio\\ENTREGABLE-01-PROPUESTA-INICIAL-DEL-PROYECTO\\.archify\\architecture-admision-unsch-20261001-171746\\candidate.json",
+    "sha256": "1a8c06235409ea09ab3fc6fa92ebe187e8286fa8696a12d09de4380cdc3b212e",
+    "bytes": 4640
+  },
+  "artifact": {
+    "path": "C:\\Users\\USUARIO\\OneDrive - unsch.edu.pe\\Escritorio\\ENTREGABLE-01-PROPUESTA-INICIAL-DEL-PROYECTO\\.archify\\architecture-admision-unsch-20261001-171746\\arquitectura-admision-unsch.html"
+  },
+  "stages": {},
+  "diagnostics": [],
+  "evidence": {
+    "receipt": "C:\\Users\\USUARIO\\OneDrive - unsch.edu.pe\\Escritorio\\ENTREGABLE-01-PROPUESTA-INICIAL-DEL-PROYECTO\\.archify\\architecture-admision-unsch-20261001-171746\\arquitectura-admision-unsch.finalize.json",
+    "summaryReceipt": "C:\\Users\\USUARIO\\OneDrive - unsch.edu.pe\\Escritorio\\ENTREGABLE-01-PROPUESTA-INICIAL-DEL-PROYECTO\\.archify\\architecture-admision-unsch-20261001-171746\\arquitectura-admision-unsch.finalize-summary.json"
+  },
+  "visualReview": "not-requested"
+}

@@ -12,140 +12,64 @@ La arquitectura se organiza en una estructura de capas, incorporando una capa de
 
 ## 1. Diagrama de arquitectura 
 
+[Abrir diagrama interactivo generado con Archify](diagrama-arquitectura-admision-unsch-archify.html)
+
 ```mermaid
 flowchart TB
+        USERS["Usuarios<br/>Postulante · Personal de Admisión · Administrador"] --> DNS["DNS"]
+        DNS --> EDGE["CDN / WAF"]
+        EDGE --> LB["Balanceador de carga"]
+        LB --> WEB["Portal web"]
+        WEB --> API["API REST"]
 
-%% =====================================================
-%% USUARIOS
-%% =====================================================
+        subgraph APP["Backend modular · aplicación única"]
+                direction TB
+                AUTH["Autenticación y autorización"]
+                APPLICANTS["Postulantes"]
+                ENROLLMENTS["Inscripciones<br/>Código único · estado"]
+                MODES["Modalidades<br/>Ordinario / Exonerados"]
+                PROGRAMS["Programas de estudio"]
+                PAYMENTS["Gestión de pagos"]
+                DOCUMENTS["Documentos<br/>Ficha de inscripción PDF"]
+                RESULTS["Publicación y consulta de resultados"]
+                REPORTS["Reportes administrativos"]
+                NOTIFICATIONS["Notificaciones"]
 
-subgraph USUARIOS["USUARIOS"]
-    P["👤 Postulante"]
-    PA["👨‍💼 Personal de Admisión"]
-    AD["🔐 Administrador"]
-end
+                AUTH --> APPLICANTS --> ENROLLMENTS
+                MODES --> ENROLLMENTS
+                PROGRAMS --> ENROLLMENTS
+                ENROLLMENTS --> PAYMENTS
+                ENROLLMENTS --> DOCUMENTS
+                ENROLLMENTS --> NOTIFICATIONS
+                PAYMENTS --> NOTIFICATIONS
+                APPLICANTS --> REPORTS
+                ENROLLMENTS --> REPORTS
+        end
 
-%% =====================================================
-%% ACCESO Y SEGURIDAD
-%% =====================================================
+        API --> AUTH
+        DB[("Base de datos relacional")]
+        CACHE[("Caché")]
+        FILES["Almacenamiento de documentos"]
+        IDENTITY["Validación de identidad<br/>Servicio externo conceptual"]
+        GATEWAY["Pasarela de pago<br/>Servicio externo conceptual"]
+        EMAIL["Servicio de correo<br/>Servicio externo conceptual"]
 
-subgraph ACCESO["ACCESO Y SEGURIDAD"]
-    DNS["🌐 DNS"]
-    WAF["🛡️ CDN + WAF"]
-    LB["⚖️ Balanceador de carga"]
-end
-
-%% =====================================================
-%% PRESENTACIÓN
-%% =====================================================
-
-subgraph PRESENTACION["CAPA DE PRESENTACIÓN"]
-    WEB["💻 Portal Web de Admisión"]
-end
-
-%% =====================================================
-%% SERVICIOS
-%% =====================================================
-
-subgraph SERVICIOS["CAPA DE SERVICIOS"]
-    API["🔌 API REST"]
-end
-
-%% =====================================================
-%% LÓGICA DE NEGOCIO
-%% =====================================================
-
-subgraph NEGOCIO["LÓGICA DE NEGOCIO"]
-    AUTH["🔑 Autenticación y usuarios"]
-    POST["👤 Gestión de postulantes"]
-    INS["📝 Gestión de inscripciones"]
-    MOD["📋 Modalidades de admisión"]
-    PROG["🎓 Programas de estudio"]
-    PAGO["💳 Gestión de pagos"]
-    DOC["📄 Gestión de documentos"]
-    RES["🏆 Resultados"]
-    NOT["✉️ Notificaciones"]
-end
-
-%% =====================================================
-%% DATOS
-%% =====================================================
-
-subgraph DATOS["CAPA DE DATOS"]
-    BD["🗄️ Base de datos"]
-    CACHE["⚡ Caché"]
-    STORAGE["📦 Almacenamiento de archivos"]
-end
-
-%% =====================================================
-%% SERVICIOS EXTERNOS
-%% =====================================================
-
-subgraph EXTERNOS["SERVICIOS EXTERNOS"]
-    IDENT["🪪 Validación de identidad"]
-    GATEWAY["💳 Pasarela de pago"]
-    EMAIL["📧 Servicio de correo"]
-end
-
-%% =====================================================
-%% FLUJO DE ACCESO
-%% =====================================================
-
-P --> DNS
-PA --> DNS
-AD --> DNS
-
-DNS --> WAF
-WAF --> LB
-LB --> WEB
-WEB --> API
-
-%% =====================================================
-%% API → NEGOCIO
-%% =====================================================
-
-API --> AUTH
-API --> POST
-API --> INS
-API --> MOD
-API --> PROG
-API --> PAGO
-API --> DOC
-API --> RES
-
-%% =====================================================
-%% NEGOCIO → DATOS
-%% =====================================================
-
-AUTH --> BD
-POST --> BD
-INS --> BD
-MOD --> BD
-PROG --> BD
-PAGO --> BD
-RES --> BD
-
-POST --> CACHE
-MOD --> CACHE
-PROG --> CACHE
-RES --> CACHE
-
-DOC --> STORAGE
-POST --> STORAGE
-
-%% =====================================================
-%% SERVICIOS EXTERNOS
-%% =====================================================
-
-POST --> IDENT
-PAGO --> GATEWAY
-INS --> NOT
-DOC --> NOT
-NOT --> EMAIL
-
+        APPLICANTS --> DB
+        ENROLLMENTS --> DB
+        PAYMENTS --> DB
+        RESULTS --> DB
+        REPORTS --> DB
+        MODES --> CACHE
+        PROGRAMS --> CACHE
+        DOCUMENTS --> FILES
+        APPLICANTS -. "validación de DNI" .-> IDENTITY
+        PAYMENTS -. "procesamiento de pagos" .-> GATEWAY
+        NOTIFICATIONS -. "envío de avisos" .-> EMAIL
 ```
 
----
+> **Escenario de carga:** aproximadamente 15 000 postulantes en periodos de inscripción. Se propone iniciar con una infraestructura pequeña y escalar las instancias detrás del balanceador según pruebas de carga; esta cifra es un objetivo de diseño, no una capacidad garantizada.
+>
+> La validación de identidad, la pasarela de pago y el correo son integraciones conceptuales; no se presupone proveedor ni integración real.
 
 ## 2. Componentes principales
 
