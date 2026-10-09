@@ -1,3 +1,3 @@
-## Diagrama del enfoque arquitectónico
+## Enfoque arquitectónico
 
-![Enfoque arquitectónico Clean Architecture](enfoque.png)
+![Clean Architecture](./enfoque.png)
