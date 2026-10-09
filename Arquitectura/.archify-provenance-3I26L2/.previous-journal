@@ -1,8 +1,0 @@
-{
-  "schemaVersion": 1,
-  "command": "deliver",
-  "status": "pending",
-  "receiptId": "1aa3a6e7-bb3e-43ef-979b-8594c413cba4",
-  "input": "C:\\Users\\USUARIO\\OneDrive - unsch.edu.pe\\Escritorio\\ENTREGABLE-01-PROPUESTA-INICIAL-DEL-PROYECTO\\.archify\\architecture-admision-unsch-20261001-171746\\candidate.json",
-  "output": "C:\\Users\\USUARIO\\OneDrive - unsch.edu.pe\\Escritorio\\ENTREGABLE-01-PROPUESTA-INICIAL-DEL-PROYECTO\\Arquitectura\\diagrama-arquitectura-admision-unsch.html"
-}

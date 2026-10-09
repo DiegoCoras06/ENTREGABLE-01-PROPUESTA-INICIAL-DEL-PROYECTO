@@ -12,59 +12,109 @@ La arquitectura se organiza en una estructura de capas, incorporando una capa de
 
 ## 1. Diagrama de arquitectura 
 
-[Abrir diagrama interactivo generado con Archify](diagrama-arquitectura-admision-unsch-archify.html)
+### 5. Diagrama de arquitectura inicial
 
 ```mermaid
 flowchart TB
-        USERS["Usuarios<br/>Postulante · Personal de Admisión · Administrador"] --> DNS["DNS"]
-        DNS --> EDGE["CDN / WAF"]
-        EDGE --> LB["Balanceador de carga"]
-        LB --> WEB["Portal web"]
-        WEB --> API["API REST"]
+    U["Postulante / Personal de admisión / Administrador"]
 
-        subgraph APP["Backend modular · aplicación única"]
-                direction TB
-                AUTH["Autenticación y autorización"]
-                APPLICANTS["Postulantes"]
-                ENROLLMENTS["Inscripciones<br/>Código único · estado"]
-                MODES["Modalidades<br/>Ordinario / Exonerados"]
-                PROGRAMS["Programas de estudio"]
-                PAYMENTS["Gestión de pagos"]
-                DOCUMENTS["Documentos<br/>Ficha de inscripción PDF"]
-                RESULTS["Publicación y consulta de resultados"]
-                REPORTS["Reportes administrativos"]
-                NOTIFICATIONS["Notificaciones"]
+    subgraph WEB["Presentación web"]
+        FE["Aplicación Angular"]
+    end
 
-                AUTH --> APPLICANTS --> ENROLLMENTS
-                MODES --> ENROLLMENTS
-                PROGRAMS --> ENROLLMENTS
-                ENROLLMENTS --> PAYMENTS
-                ENROLLMENTS --> DOCUMENTS
-                ENROLLMENTS --> NOTIFICATIONS
-                PAYMENTS --> NOTIFICATIONS
-                APPLICANTS --> REPORTS
-                ENROLLMENTS --> REPORTS
-        end
+    subgraph ACCESO["Acceso seguro"]
+        DNS["Route 53 - Dominio"]
+        CDN["CloudFront - HTTPS y caché estático"]
+        API["API Gateway - REST HTTPS"]
+    end
 
-        API --> AUTH
-        DB[("Base de datos relacional")]
-        CACHE[("Caché")]
-        FILES["Almacenamiento de documentos"]
-        IDENTITY["Validación de identidad<br/>Servicio externo conceptual"]
-        GATEWAY["Pasarela de pago<br/>Servicio externo conceptual"]
-        EMAIL["Servicio de correo<br/>Servicio externo conceptual"]
+    subgraph MS["Microservicios Serverless - AWS Lambda"]
+        US["Usuarios"]
+        PO["Postulantes"]
+        IN["Inscripciones"]
+        EV["Evaluación"]
+        DO["Documentos"]
+        PA["Pagos"]
+        NO["Notificaciones"]
+    end
 
-        APPLICANTS --> DB
-        ENROLLMENTS --> DB
-        PAYMENTS --> DB
-        RESULTS --> DB
-        REPORTS --> DB
-        MODES --> CACHE
-        PROGRAMS --> CACHE
-        DOCUMENTS --> FILES
-        APPLICANTS -. "validación de DNI" .-> IDENTITY
-        PAYMENTS -. "procesamiento de pagos" .-> GATEWAY
-        NOTIFICATIONS -. "envío de avisos" .-> EMAIL
+    subgraph DATOS["Persistencia y caché"]
+        DB[("Amazon RDS - PostgreSQL")]
+        CACHE[("ElastiCache - Redis")]
+    end
+
+    subgraph EVENTOS["Comunicación asíncrona"]
+        EB["Amazon EventBridge"]
+    end
+
+    subgraph EXTERNOS["Integraciones externas"]
+        ID["Validación de identidad"]
+        PG["Pasarela de pagos"]
+        SES["Amazon SES"]
+    end
+
+    U --> DNS
+    DNS --> CDN
+    CDN --> FE
+    FE --> API
+
+    API --> US
+    API --> PO
+    API --> IN
+    API --> EV
+    API --> DO
+    API --> PA
+    API --> NO
+
+    US --> DB
+    PO --> DB
+    IN --> DB
+    EV --> DB
+    DO --> DB
+    PA --> DB
+    NO --> DB
+
+    PO <--> CACHE
+    IN <--> CACHE
+    EV <--> CACHE
+
+    IN --> EB
+    PA --> EB
+    EB --> NO
+
+    PO --> ID
+    PA --> PG
+    NO --> SES
+```
+
+**Nota:** El diagrama representa una vista lógica inicial. Las conexiones con PostgreSQL indican persistencia de cada servicio, no acceso compartido indiscriminado a las mismas tablas. El certificado HTTPS se administrará mediante AWS Certificate Manager.
+
+### 6. Estructura interna de los microservicios
+
+Cada microservicio implementará Clean Architecture.
+
+```mermaid
+flowchart TB
+    API["API Gateway - HTTPS"]
+
+    subgraph LAMBDA["Microservicio AWS Lambda"]
+        I["Interfaces - Handlers y Controllers"]
+        A["Aplicación - Casos de uso"]
+        D["Dominio - Entidades y reglas"]
+        INF["Infraestructura - Adaptadores y repositorios"]
+    end
+
+    DB[("PostgreSQL - Amazon RDS")]
+    CACHE[("Redis - ElastiCache")]
+    EXT["Servicios externos"]
+
+    API --> I
+    I --> A
+    A --> D
+    I --> INF
+    INF --> DB
+    INF --> CACHE
+    INF --> EXT
 ```
 
 > **Escenario de carga:** aproximadamente 15 000 postulantes en periodos de inscripción. Se propone iniciar con una infraestructura pequeña y escalar las instancias detrás del balanceador según pruebas de carga; esta cifra es un objetivo de diseño, no una capacidad garantizada.
