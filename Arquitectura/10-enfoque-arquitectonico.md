@@ -1,3 +1,3 @@
-## Enfoque arquitectónico
+## Enfoque de arquitectura
 
-![Clean Architecture](./enfoque.png)
+![Estilo arquitectónico del Sistema de Gestión del Proceso de Admisión](Enfoque.png)
