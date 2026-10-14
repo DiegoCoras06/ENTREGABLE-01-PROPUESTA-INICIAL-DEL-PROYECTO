@@ -1,4 +1,4 @@
-# 12. Principios de Diseño (SOLID)
+# Principios de Diseño (SOLID)
 
 ## Sistema Integral de Gestión del Proceso de Admisión – UNSCH
 

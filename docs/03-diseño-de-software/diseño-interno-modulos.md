@@ -1,4 +1,4 @@
-# 10. Diseño Interno de Módulos
+# Diseño Interno de Módulos
 
 **Proyecto:** Sistema Integral de Gestión del Proceso de Admisión – UNSCH  
 **Backend propuesto:** Node.js + TypeScript  

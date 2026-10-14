@@ -1,4 +1,4 @@
-# 11. Patrones de Diseño
+# Patrones de Diseño
 
 ## Sistema Integral de Gestión del Proceso de Admisión – UNSCH
 
