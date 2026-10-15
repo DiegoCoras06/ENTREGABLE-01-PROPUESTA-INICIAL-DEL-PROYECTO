@@ -1,40 +1,72 @@
-# Actores del sistema
+# Actores del Sistema de Gestión del Proceso de Admisión – UNSCH
 
-## Sistema de Gestión del Proceso de Admisión
+## 1. Identificación de actores
 
-Los actores representan a las personas, organizaciones o sistemas externos que interactúan con el sistema de gestión del proceso de admisión.
+Los actores representan a los usuarios y servicios externos que interactúan con el Sistema de Gestión del Proceso de Admisión de la UNSCH.
 
-| ID  | Actor                               | Tipo            | ¿Qué necesita realizar?                                                                                                                              |
-| --- | ----------------------------------- | --------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
-| A01 | Postulante                          | Usuario         | Registrarse, completar su inscripción, seleccionar modalidad y programa de estudios, consultar el estado de su inscripción y obtener sus documentos. |
-| A02 | Personal de Admisión                | Usuario         | Gestionar postulantes, verificar inscripciones, administrar información del proceso y consultar información de los postulantes.                      |
-| A03 | Administrador                       | Usuario         | Administrar usuarios, modalidades, programas de estudio, procesos de admisión y configuración general del sistema.                                   |
-| A04 | Servicio de validación de identidad | Sistema externo | Validar los datos de identificación del postulante mediante su documento de identidad.                                                               |
-| A05 | Pasarela de pago                    | Sistema externo | Procesar los pagos correspondientes al proceso de admisión.                                                                                          |
-| A06 | Servicio de correo electrónico      | Sistema externo | Enviar confirmaciones, notificaciones e información relacionada con la inscripción.                                                                  |
+## 2. Actores del sistema
 
-## Descripción de actores
+| ID | Actor | Tipo | Función principal |
+|---|---|---|---|
+| A01 | Postulante | Usuario | Registrarse, inscribirse en Ordinaria o Exonerados, pagar y consultar resultados. |
+| A02 | Personal de Admisión | Usuario | Gestionar postulantes, inscripciones y convocatorias. |
+| A03 | Administrador | Usuario | Administrar usuarios, roles, modalidades y configuraciones. |
+| A04 | Evaluador Documental | Usuario | Revisar, observar y aprobar expedientes. |
+| A05 | Responsable de Tesorería | Usuario | Verificar pagos y generar reportes de recaudación. |
+| A06 | Coordinador de Exámenes | Usuario | Programar exámenes y asignar sedes y aulas. |
+| A07 | Responsable de Resultados | Usuario | Procesar calificaciones y publicar resultados. |
+| A08 | Personal de Soporte | Usuario | Atender consultas e incidencias de postulantes. |
+| A09 | RENIEC | Sistema externo | Validar la identidad de los postulantes. |
+| A10 | Pasarela de Pagos | Sistema externo | Procesar y confirmar pagos de inscripción. |
+| A11 | Servicio de Correo | Sistema externo | Enviar confirmaciones y notificaciones. |
+| A12 | OpenRouter API | Sistema externo | Procesar consultas del chatbot inteligente. |
+| A13 | Servicio SMS | Sistema externo | Enviar códigos y recordatorios. |
 
-### A01 - Postulante
+## 3. Descripción de actores
 
-Es la persona que participa en el proceso de admisión. Utiliza el sistema para registrar sus datos, realizar su inscripción, seleccionar la modalidad y programa de estudios y consultar la información relacionada con su participación.
+### A01 – Postulante
+Persona que realiza su inscripción, presenta documentos, efectúa pagos, consulta su examen y resultados, y utiliza el chatbot.
 
-### A02 - Personal de Admisión
+### A02 – Personal de Admisión
+Gestiona y supervisa las inscripciones, convocatorias y datos de los postulantes.
 
-Es el usuario encargado de gestionar y verificar la información relacionada con los postulantes y el proceso de admisión.
+### A03 – Administrador
+Administra usuarios, permisos, modalidades, programas de estudios y configuraciones del sistema.
 
-### A03 - Administrador
+### A04 – Evaluador Documental
+Verifica los requisitos y documentos presentados, especialmente en la modalidad Exonerados.
 
-Es el usuario responsable de administrar las configuraciones y datos principales del sistema de admisión.
+### A05 – Responsable de Tesorería
+Supervisa las transacciones, confirma pagos y genera reportes financieros.
 
-### A04 - Servicio de validación de identidad
+### A06 – Coordinador de Exámenes
+Organiza los exámenes, asigna aulas, sedes y horarios a los postulantes.
 
-Sistema externo utilizado para validar la identidad y los datos básicos del postulante.
+### A07 – Responsable de Resultados
+Gestiona calificaciones, órdenes de mérito y publicación de resultados oficiales.
 
-### A05 - Pasarela de pago
+### A08 – Personal de Soporte
+Resuelve incidencias y atiende consultas derivadas del chatbot.
 
-Sistema externo responsable de procesar los pagos asociados al proceso de admisión.
+### A09 – RENIEC
+Servicio externo que permite validar la identidad de los postulantes.
 
-### A06 - Servicio de correo electrónico
+### A10 – Pasarela de Pagos
+Servicio externo encargado de procesar y confirmar los pagos de inscripción.
 
-Sistema externo utilizado para enviar confirmaciones y notificaciones a los postulantes.
+### A11 – Servicio de Correo Electrónico
+Envía notificaciones, confirmaciones y comunicaciones del proceso.
+
+### A12 – OpenRouter API
+Servicio externo de inteligencia artificial utilizado por el chatbot para brindar orientación y seguimiento.
+
+### A13 – Servicio SMS
+Servicio externo que permite enviar códigos de verificación y recordatorios.
+
+## 4. Resumen
+
+- Actores humanos: 8
+- Sistemas externos: 5
+- Total de actores: 13
+
+El sistema se desarrollará mediante una arquitectura de Monolito Modular por Capas, aplicando los principios de Arquitectura Limpia (Clean Architecture).
