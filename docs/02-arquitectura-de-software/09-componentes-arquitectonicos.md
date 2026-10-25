@@ -3,33 +3,35 @@
 
 ## 6.1. Descripción general
 
-El Sistema Integral de Gestión del Proceso de Admisión UNSCH estará desarrollado bajo una arquitectura de Monolito Modular por Capas, siguiendo principios de Clean Architecture.
+El Sistema Integral de Gestión del Proceso de Admisión UNSCH estará desarrollado bajo una arquitectura de **Monolito Modular por Capas**, aplicando principios de Clean Architecture.
 
 El backend estará implementado con Node.js y TypeScript y podrá desplegarse como una única aplicación en AWS Lambda, expuesta mediante Amazon API Gateway.
 
-Los componentes arquitectónicos estarán organizados en cuatro capas: presentación, interfaces, aplicación y dominio, además de los adaptadores de infraestructura que permitirán acceder a los servicios externos.
+La arquitectura estará organizada en cuatro capas: presentación, interfaces, aplicación y dominio. Adicionalmente, contará con una capa de infraestructura encargada de implementar los mecanismos de persistencia y las integraciones externas.
+
+Los módulos funcionales formarán parte de un único backend desplegable, manteniendo responsabilidades definidas y una separación lógica entre sus componentes.
 
 ## 6.2. Diagrama de componentes arquitectónicos
 
 ```mermaid
 flowchart TB
     FE["Aplicación Angular<br/>Interfaz web"]
-
     API["Amazon API Gateway<br/>API REST HTTPS"]
 
-    subgraph BACKEND["Monolito Modular - Node.js + TypeScript"]
+    subgraph BACKEND["Monolito Modular - Node.js y TypeScript"]
         direction TB
 
         subgraph INTERFACES["Capa de interfaces"]
             CTRL["Controladores REST"]
-            AUTH["Middleware de autenticación y autorización"]
+            AUTH["Autenticación y autorización"]
         end
 
         subgraph APLICACION["Capa de aplicación"]
             UC["Casos de uso<br/>Coordinación de procesos"]
+            PORTS["Puertos e interfaces<br/>Contratos de infraestructura"]
         end
 
-        subgraph DOMINIO["Capa de dominio - Módulos funcionales"]
+        subgraph DOMINIO["Módulos funcionales del dominio"]
             direction TB
 
             M01["Convocatorias"]
@@ -54,7 +56,6 @@ flowchart TB
             FILES["Adaptador de archivos"]
             QUEUE["Adaptador de mensajería"]
             INTEGRATIONS["Adaptadores de APIs externas"]
-            OBS["Observabilidad y registros"]
         end
 
         CTRL --> AUTH
@@ -75,25 +76,13 @@ flowchart TB
         UC --> M13
         UC --> M14
 
-        M01 --> REP
-        M02 --> REP
-        M03 --> REP
-        M04 --> REP
-        M05 --> REP
-        M06 --> REP
-        M07 --> REP
-        M08 --> REP
-        M09 --> REP
-        M10 --> INTEGRATIONS
-        M11 --> INTEGRATIONS
-        M12 --> REP
-        M13 --> REP
-        M14 --> REP
+        UC --> PORTS
 
-        UC --> CACHE
-        UC --> FILES
-        UC --> QUEUE
-        UC --> OBS
+        REP -.->|"Implementa"| PORTS
+        CACHE -.->|"Implementa"| PORTS
+        FILES -.->|"Implementa"| PORTS
+        QUEUE -.->|"Implementa"| PORTS
+        INTEGRATIONS -.->|"Implementa"| PORTS
     end
 
     subgraph DATOS["Persistencia y servicios AWS"]
@@ -101,39 +90,40 @@ flowchart TB
         REDIS[("Amazon ElastiCache Redis")]
         S3["Amazon S3"]
         SQS["Amazon SQS"]
-        CW["Amazon CloudWatch"]
     end
 
     subgraph EXTERNOS["Servicios externos"]
-        RENIEC["RENIEC"]
+        RENIEC["RENIEC - Validación de identidad"]
         PAY["Pasarela de pagos"]
-        AI["OpenRouter API"]
-        EMAIL["Correo electrónico / SMS"]
+        AI["OpenRouter API - Chatbot IA"]
+        EMAIL["Servicio de correo electrónico / SMS"]
     end
 
-    FE --> API
-    API --> CTRL
+    FE -->|"Solicitudes HTTPS"| API
+    API -->|"Invoca AWS Lambda"| CTRL
 
-    REP --> DB
-    CACHE --> REDIS
-    FILES --> S3
-    QUEUE --> SQS
-    OBS --> CW
+    REP -->|"SQL"| DB
+    CACHE -->|"Caché"| REDIS
+    FILES -->|"Archivos"| S3
+    QUEUE -->|"Mensajes"| SQS
 
-    INTEGRATIONS --> RENIEC
-    INTEGRATIONS --> PAY
-    INTEGRATIONS --> AI
-    INTEGRATIONS --> EMAIL
+    INTEGRATIONS -->|"HTTPS"| RENIEC
+    INTEGRATIONS -->|"HTTPS"| PAY
+    INTEGRATIONS -->|"HTTPS"| AI
+    INTEGRATIONS -->|"HTTPS"| EMAIL
 
-    classDef frontend fill:#244478,color:#fff,stroke:#244478
-    classDef layer fill:#3d6cba,color:#fff,stroke:#28539b
+    classDef frontend fill:#244478,color:#ffffff,stroke:#244478
+    classDef layer fill:#3d6cba,color:#ffffff,stroke:#28539b
     classDef module fill:#d8e8fa,color:#102b50,stroke:#6a95cc
-    classDef external fill:#e6e6e6,color:#222,stroke:#888
+    classDef external fill:#e6e6e6,color:#222222,stroke:#888888
 
     class FE,API frontend
-    class CTRL,AUTH,UC,REP,CACHE,FILES,QUEUE,INTEGRATIONS,OBS layer
+    class CTRL,AUTH,UC,PORTS,REP,CACHE,FILES,QUEUE,INTEGRATIONS layer
     class M01,M02,M03,M04,M05,M06,M07,M08,M09,M10,M11,M12,M13,M14 module
-    class DB,REDIS,S3,SQS,CW,RENIEC,PAY,AI,EMAIL external
+    class DB,REDIS,S3,SQS,RENIEC,PAY,AI,EMAIL external
+
+    style BACKEND fill:#ffffff,stroke:#777777,stroke-width:2px
+    style DOMINIO fill:#f8fbff,stroke:#6a95cc
 ```
 
 ## 6.3. Componentes principales
@@ -144,15 +134,15 @@ La aplicación Angular permitirá que los postulantes, el personal de admisión 
 
 ### Componente de controladores REST
 
-Recibirá las solicitudes HTTP provenientes de Amazon API Gateway, validará los datos y enviará las operaciones a los casos de uso correspondientes.
+Recibirá las solicitudes HTTP provenientes de Amazon API Gateway, validará los datos de entrada y enviará las operaciones a los casos de uso correspondientes.
 
 ### Componente de autenticación y autorización
 
-Verificará la identidad de los usuarios y controlará el acceso a las funcionalidades según los roles y permisos establecidos.
+Verificará la identidad de los usuarios y controlará el acceso a las funcionalidades del sistema según los roles y permisos establecidos.
 
 ### Componente de casos de uso
 
-Coordinará los procesos de negocio y permitirá ejecutar operaciones relacionadas con convocatorias, inscripciones, pagos, evaluaciones, resultados y otros procesos de admisión.
+Coordinará los procesos de negocio relacionados con convocatorias, inscripciones, pagos, evaluaciones, resultados y otras funcionalidades del sistema.
 
 ### Componentes del dominio
 
@@ -173,7 +163,13 @@ El sistema estará organizado en 14 módulos funcionales:
 13. Seguridad.
 14. Configuración.
 
-Cada módulo tendrá responsabilidades específicas y mantendrá una separación lógica dentro del backend.
+Cada módulo tendrá responsabilidades específicas y mantendrá una separación lógica dentro de la aplicación.
+
+Los módulos de chatbot, notificaciones, reportes y configuración representan capacidades funcionales. Sus reglas y casos de uso se mantendrán separados de las implementaciones técnicas de los servicios externos.
+
+### Componente de puertos e interfaces
+
+Definirá los contratos necesarios para que los casos de uso puedan acceder a repositorios, servicios de almacenamiento, mensajería e integraciones externas sin depender directamente de sus implementaciones.
 
 ### Componente de persistencia
 
@@ -183,36 +179,56 @@ Permitirá almacenar y consultar información mediante repositorios conectados a
 
 Utilizará Amazon S3 para almacenar expedientes, fichas de inscripción y otros documentos digitales.
 
+### Componente de caché
+
+Podrá utilizar Amazon ElastiCache Redis para almacenar temporalmente información de consulta frecuente y reducir las solicitudes repetitivas a la base de datos.
+
 ### Componente de integración
 
-Permitirá establecer comunicación con RENIEC, la pasarela de pagos, OpenRouter API y los servicios de notificaciones.
+Permitirá establecer comunicación con RENIEC, la pasarela de pagos, OpenRouter API y los servicios de correo electrónico y SMS mediante adaptadores.
 
 ### Componente de mensajería
 
-Utilizará Amazon SQS para procesar tareas asíncronas, como notificaciones y otras operaciones que no requieran una respuesta inmediata.
-
-### Componente de monitoreo
-
-Utilizará Amazon CloudWatch para registrar eventos técnicos, supervisar el funcionamiento del backend e identificar posibles errores.
+Utilizará Amazon SQS para gestionar tareas asíncronas, como el procesamiento de notificaciones y otras operaciones que no requieran una respuesta inmediata.
 
 ## 6.4. Relación entre componentes
 
 La aplicación Angular enviará solicitudes HTTPS a Amazon API Gateway, que invocará el backend desplegado en AWS Lambda.
 
-Los controladores REST recibirán las solicitudes y verificarán las condiciones de autenticación y autorización.
+Los controladores REST recibirán las solicitudes y aplicarán las validaciones de autenticación y autorización correspondientes.
 
-Posteriormente, los casos de uso ejecutarán los procesos correspondientes, aplicando las reglas de negocio definidas en los módulos funcionales.
+Posteriormente, los casos de uso coordinarán las operaciones y aplicarán las reglas de negocio definidas en los módulos funcionales.
 
-Cuando sea necesario almacenar información o comunicarse con servicios externos, se utilizarán los adaptadores de infraestructura.
+Cuando sea necesario almacenar información o comunicarse con servicios externos, los casos de uso utilizarán puertos e interfaces definidos en la aplicación.
 
-Finalmente, el backend devolverá la respuesta a la aplicación Angular.
+Los adaptadores de infraestructura implementarán estos contratos para comunicarse con Amazon RDS PostgreSQL, Amazon S3, Amazon ElastiCache Redis, Amazon SQS y los servicios externos.
 
-## 6.5. Justificación
+Finalmente, el backend devolverá la respuesta a Amazon API Gateway, que la enviará a la aplicación Angular para mostrar el resultado al usuario.
 
-La organización de componentes propuesta permite mantener las funcionalidades del sistema dentro de un único backend, evitando la complejidad de administrar múltiples microservicios.
+## 6.5. Justificación arquitectónica
+
+La arquitectura de Monolito Modular por Capas permite mantener las funcionalidades del sistema dentro de una única aplicación backend, evitando la complejidad de administrar múltiples microservicios.
 
 La separación por capas facilita el mantenimiento, las pruebas y la incorporación de nuevas funcionalidades.
 
-Asimismo, el uso de interfaces y adaptadores permite reducir el acoplamiento entre la lógica de negocio y los servicios externos.
+Asimismo, la aplicación de principios de Clean Architecture permite reducir el acoplamiento entre la lógica de negocio y las tecnologías de infraestructura.
 
-Esta organización resulta adecuada para el Sistema Integral de Gestión del Proceso de Admisión UNSCH porque permite desarrollar una solución modular, mantenible y preparada para futuras ampliaciones.
+Los módulos funcionales podrán evolucionar de manera organizada sin requerir despliegues independientes.
+
+Esta arquitectura resulta adecuada para el Sistema Integral de Gestión del Proceso de Admisión UNSCH porque permite desarrollar una solución modular, mantenible y preparada para futuras ampliaciones.
+
+## 6.6. Consideraciones técnicas
+
+El diagrama representa una vista lógica inicial de los componentes arquitectónicos.
+
+Los 14 módulos funcionales formarán parte de un único backend desplegable en AWS Lambda.
+
+La capa de dominio no dependerá directamente de los servicios AWS ni de las implementaciones de infraestructura.
+
+Los repositorios y adaptadores implementarán los contratos definidos por las capas internas, siguiendo el principio de inversión de dependencias.
+
+Los módulos compartirán una instancia de PostgreSQL, pero deberán mantener límites lógicos para evitar el acceso indiscriminado a los datos de otros módulos.
+
+Amazon SQS requerirá un consumidor de mensajes, que podrá implementarse mediante un controlador de eventos dentro del mismo proyecto backend.
+
+Los servicios de caché y mensajería podrán incorporarse progresivamente según las necesidades de rendimiento y procesamiento del sistema.
