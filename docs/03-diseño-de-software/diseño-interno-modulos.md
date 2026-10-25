@@ -1,32 +1,79 @@
-# Diseño Interno de Módulos
 
-**Proyecto:** Sistema Integral de Gestión del Proceso de Admisión – UNSCH  
-**Backend propuesto:** Node.js + TypeScript  
-**Módulo de referencia:** Inscripción Ordinaria  
-**Enfoque arquitectónico:** Clean Architecture dentro de un Monolito Modular por Capas  
-**Despliegue:** AWS Lambda + API Gateway mediante HTTPS  
-**Nivel C4:** 4 – Código  
-**Versión:** 1.0
+# 7. Diseño Interno de Módulos
 
----
+## 7.1. Descripción general
 
-## 1. Propósito
+El Sistema Integral de Gestión del Proceso de Admisión UNSCH estará desarrollado bajo una arquitectura de **Monolito Modular por Capas**, aplicando los principios de **Clean Architecture**.
 
-Este documento describe cómo se organizará el código fuente de los módulos del Sistema Integral de Gestión del Proceso de Admisión de la Universidad Nacional de San Cristóbal de Huamanga (UNSCH).
+Esta arquitectura permitirá organizar las funcionalidades del sistema en módulos independientes a nivel lógico, pero integrados dentro de una única aplicación backend desarrollada con Node.js y TypeScript.
 
-Tiene tres objetivos principales:
+El backend podrá desplegarse mediante AWS Lambda y comunicarse con la aplicación Angular a través de Amazon API Gateway.
 
-1. Establecer una estructura uniforme para los 14 módulos funcionales.
-2. Separar las reglas de negocio de los detalles tecnológicos mediante Clean Architecture.
-3. Facilitar el desarrollo, mantenimiento, pruebas e integración del sistema.
+El objetivo principal de este diseño es separar las responsabilidades de cada módulo, facilitar el mantenimiento del código y permitir la incorporación de nuevas funcionalidades sin afectar innecesariamente a los demás componentes.
 
-Se utilizará como referencia el módulo **Inscripción Ordinaria**, encargado de registrar las postulaciones de los estudiantes a una convocatoria de admisión.
+## 7.2. Organización interna de los módulos
 
----
+Cada módulo funcional seguirá una estructura de cuatro capas, con responsabilidades claramente definidas.
 
-## 2. Estructura de carpetas
+### Capa de presentación
 
-La aplicación estará organizada como un único backend modular, desplegado mediante AWS Lambda.
+Se encargará de recibir las solicitudes HTTP provenientes de la aplicación Angular.
+
+Contendrá los controladores REST y las rutas necesarias para acceder a las funcionalidades del módulo. También permitirá validar los datos de entrada y devolver las respuestas correspondientes.
+
+### Capa de aplicación
+
+Contendrá los casos de uso encargados de coordinar los procesos del sistema.
+
+Por ejemplo, en el módulo de Inscripción Ordinaria, esta capa ejecutará el proceso de registro, solicitará la validación de requisitos y coordinará el almacenamiento de la inscripción.
+
+### Capa de dominio
+
+Contendrá las entidades, reglas de negocio e interfaces necesarias para representar el funcionamiento del módulo.
+
+Esta capa será independiente de tecnologías como PostgreSQL, AWS Lambda o frameworks de desarrollo, permitiendo que las reglas de negocio puedan mantenerse sin depender de la infraestructura.
+
+### Capa de infraestructura
+
+Implementará los repositorios y adaptadores necesarios para comunicarse con la base de datos y los servicios externos.
+
+Por ejemplo, permitirá guardar inscripciones en Amazon RDS PostgreSQL y acceder a servicios como RENIEC o la pasarela de pagos cuando el proceso lo requiera.
+
+## 7.3. Diagrama de diseño interno
+
+Para representar la organización interna se utiliza como ejemplo el módulo de **Inscripción Ordinaria**.
+
+```mermaid
+flowchart TB
+    P["Presentación<br/>Controlador REST"]
+    A["Aplicación<br/>Registrar inscripción"]
+    D["Dominio<br/>Entidades y reglas de negocio"]
+    I["Infraestructura<br/>Repositorio PostgreSQL"]
+
+    P -->|"Ejecuta"| A
+    A -->|"Aplica reglas"| D
+    I -.->|"Implementa contratos"| D
+
+    classDef presentacion fill:#bfdbfe,stroke:#2563eb,color:#1e3a8a
+    classDef aplicacion fill:#bbf7d0,stroke:#16a34a,color:#14532d
+    classDef dominio fill:#fef3c7,stroke:#d97706,color:#78350f
+    classDef infraestructura fill:#ddd6fe,stroke:#7c3aed,color:#4c1d95
+
+    class P presentacion
+    class A aplicacion
+    class D dominio
+    class I infraestructura
+```
+
+**Interpretación del diagrama:**
+
+La capa de presentación recibe las solicitudes del usuario y las envía a la capa de aplicación. Esta coordina el caso de uso y aplica las reglas definidas en el dominio.
+
+La infraestructura implementa los contratos necesarios para almacenar y consultar información, evitando que el dominio dependa directamente de PostgreSQL.
+
+## 7.4. Estructura de carpetas
+
+Para mantener una organización uniforme, los módulos utilizarán la siguiente estructura de carpetas.
 
 ```text
 src/
@@ -36,21 +83,15 @@ src/
 │   ├── inscripcion-ordinaria/
 │   │   ├── dominio/
 │   │   │   ├── inscripcion.ts
-│   │   │   ├── estado-inscripcion.ts
-│   │   │   ├── modalidad-admision.ts
-│   │   │   ├── inscripcion-repository.ts
-│   │   │   └── elegibilidad-port.ts
+│   │   │   └── inscripcion-repository.ts
 │   │   ├── aplicacion/
-│   │   │   ├── registrar-inscripcion.use-case.ts
-│   │   │   └── registrar-inscripcion.command.ts
+│   │   │   └── registrar-inscripcion.use-case.ts
 │   │   ├── infraestructura/
-│   │   │   ├── postgres-inscripcion.repository.ts
-│   │   │   └── elegibilidad.adapter.ts
+│   │   │   └── postgres-inscripcion.repository.ts
 │   │   ├── presentacion/
 │   │   │   ├── inscripcion.controller.ts
 │   │   │   └── inscripcion.routes.ts
-│   │   ├── inscripcion-ordinaria.module.ts
-│   │   └── index.ts
+│   │   └── inscripcion-ordinaria.module.ts
 │   ├── inscripcion-exonerados/
 │   ├── pagos/
 │   ├── expedientes/
@@ -63,619 +104,100 @@ src/
 │   ├── seguridad/
 │   └── configuracion/
 ├── shared/
-│   ├── errores/
-│   ├── middleware/
-│   └── configuracion/
 ├── app.ts
 └── lambda.ts
 ```
 
-### Responsabilidad de los archivos del módulo
+Cada módulo contará con sus propios componentes internos. La carpeta `shared` almacenará únicamente elementos comunes que puedan reutilizarse sin generar dependencias innecesarias entre módulos.
 
-| Archivo | Capa | Responsabilidad | Importa de |
-|---|---|---|---|
-| `inscripcion.ts` | Dominio | Representar una inscripción y sus reglas de negocio. | Dominio |
-| `estado-inscripcion.ts` | Dominio | Definir los estados de una inscripción. | Ninguna |
-| `modalidad-admision.ts` | Dominio | Identificar la modalidad ordinaria. | Ninguna |
-| `inscripcion-repository.ts` | Dominio | Declarar las operaciones de persistencia. | Dominio |
-| `elegibilidad-port.ts` | Dominio | Definir el contrato para comprobar la elegibilidad del postulante. | Dominio |
-| `registrar-inscripcion.use-case.ts` | Aplicación | Coordinar el registro de una inscripción. | Dominio |
-| `registrar-inscripcion.command.ts` | Aplicación | Definir los datos de entrada del caso de uso. | Ninguna |
-| `postgres-inscripcion.repository.ts` | Infraestructura | Guardar y consultar inscripciones en PostgreSQL. | Dominio y driver PostgreSQL |
-| `elegibilidad.adapter.ts` | Infraestructura | Consultar las condiciones de inscripción mediante contratos de otros módulos. | Dominio y APIs internas |
-| `inscripcion.controller.ts` | Presentación | Recibir solicitudes HTTP e invocar casos de uso. | Aplicación |
-| `inscripcion.routes.ts` | Presentación | Registrar las rutas REST del módulo. | Presentación |
-| `inscripcion-ordinaria.module.ts` | Composición | Crear e inyectar las dependencias del módulo. | Todas las capas |
-| `index.ts` | API pública | Exponer las funcionalidades permitidas a otros módulos. | Composición y contratos públicos |
+Esta estructura es una propuesta de organización y podrá adaptarse a las necesidades de implementación del proyecto.
 
----
+## 7.5. Funcionamiento del módulo Inscripción Ordinaria
 
-## 3. Capas del módulo y regla de dependencia
+El módulo de Inscripción Ordinaria permitirá registrar la postulación de un estudiante a una convocatoria de admisión.
 
-### Diagrama de paquetes del módulo Inscripción Ordinaria
+El proceso seguirá la siguiente secuencia:
 
-```mermaid
-flowchart TB
-    subgraph MOD["Módulo Inscripción Ordinaria"]
-        direction TB
-        P["Presentación<br/>Controller y Routes"]
-        A["Aplicación<br/>RegistrarInscripcionUseCase"]
-        D["Dominio<br/>Inscripcion · Estados · Puertos"]
-        I["Infraestructura<br/>PostgreSQL · Adaptadores"]
-        C["Composición<br/>inscripcion-ordinaria.module.ts"]
-    end
+1. **Registro de información:** el postulante completará el formulario de inscripción desde la aplicación Angular.
 
-    P --> A
-    A --> D
-    I --> D
-    C -.-> P
-    C -.-> A
-    C -.-> I
+2. **Recepción de solicitud:** Amazon API Gateway enviará la solicitud al backend, donde será procesada por el controlador REST.
 
-    classDef dominio fill:#fef3c7,stroke:#d97706,color:#78350f
-    classDef aplicacion fill:#bbf7d0,stroke:#16a34a,color:#14532d
-    classDef infraestructura fill:#ddd6fe,stroke:#7c3aed,color:#4c1d95
-    classDef presentacion fill:#bfdbfe,stroke:#2563eb,color:#1e3a8a
+3. **Validación de requisitos:** el caso de uso verificará que el postulante cumpla las condiciones establecidas para la convocatoria.
 
-    class D dominio
-    class A aplicacion
-    class I infraestructura
-    class P presentacion
-```
+4. **Verificación de duplicados:** el sistema comprobará que no exista una inscripción previa para el mismo postulante y convocatoria.
 
-### Reglas de dependencia
+5. **Aplicación de reglas de negocio:** el dominio creará la inscripción con el estado inicial correspondiente.
 
-| Capa | Contiene | Responsabilidad | Puede depender de | No puede depender de |
-|---|---|---|---|---|
-| Dominio | Entidades, enumeraciones, objetos de valor y puertos | Implementar las reglas de negocio. | Código propio del dominio | Aplicación, infraestructura, presentación, Express, PostgreSQL |
-| Aplicación | Casos de uso y comandos | Coordinar los procesos del sistema. | Dominio | Infraestructura, presentación, ORM |
-| Infraestructura | Repositorios y adaptadores | Implementar persistencia e integraciones externas. | Dominio y librerías externas | Presentación y controladores |
-| Presentación | Controladores y rutas REST | Procesar solicitudes HTTP y devolver respuestas. | Aplicación | Repositorios concretos y acceso directo a PostgreSQL |
-| Composición | Configuración e inyección de dependencias | Conectar las implementaciones concretas. | Todas las capas | — |
+6. **Almacenamiento:** el repositorio guardará la información en Amazon RDS PostgreSQL.
 
-**Regla principal:** las dependencias del código deben orientarse hacia el dominio. El dominio no debe conocer AWS Lambda, Express, PostgreSQL, Redis ni servicios externos.
+7. **Respuesta al usuario:** el sistema devolverá el código de inscripción y su estado actual.
 
----
+Inicialmente, la inscripción tendrá el estado **PENDIENTE_PAGO**. Una vez confirmada la operación por la pasarela de pagos, el módulo correspondiente permitirá actualizar su estado según las reglas del proceso de admisión.
 
-## 4. Diagrama de clases
+## 7.6. Módulos funcionales del sistema
 
-El siguiente diagrama representa las principales clases e interfaces del módulo Inscripción Ordinaria.
-
-```mermaid
-classDiagram
-    direction TB
-
-    class Inscripcion {
-        +string id
-        +string postulanteId
-        +string convocatoriaId
-        +string programaId
-        -EstadoInscripcion estado
-        +crear()
-        +confirmarPago()
-        +obtenerEstado()
-    }
-
-    class EstadoInscripcion {
-        <<enumeration>>
-        PENDIENTE_PAGO
-        PAGO_CONFIRMADO
-        CONFIRMADA
-        ANULADA
-    }
-
-    class ModalidadAdmision {
-        <<enumeration>>
-        ORDINARIA
-    }
-
-    class InscripcionRepository {
-        <<interface>>
-        +guardar(inscripcion) Promise
-        +buscarPorId(id) Promise
-        +existe(postulanteId, convocatoriaId) Promise
-    }
-
-    class ElegibilidadPort {
-        <<interface>>
-        +verificar(postulanteId, convocatoriaId, programaId) Promise
-    }
-
-    class RegistrarInscripcionCommand {
-        +string postulanteId
-        +string convocatoriaId
-        +string programaId
-    }
-
-    class RegistrarInscripcionUseCase {
-        -InscripcionRepository repository
-        -ElegibilidadPort elegibilidad
-        +ejecutar(command) Promise
-    }
-
-    class PostgresInscripcionRepository {
-        +guardar(inscripcion) Promise
-        +buscarPorId(id) Promise
-        +existe(postulanteId, convocatoriaId) Promise
-    }
-
-    class ElegibilidadAdapter {
-        +verificar(postulanteId, convocatoriaId, programaId) Promise
-    }
-
-    class InscripcionController {
-        +registrar(request, response)
-    }
-
-    Inscripcion --> EstadoInscripcion
-    Inscripcion --> ModalidadAdmision
-    RegistrarInscripcionUseCase --> Inscripcion
-    RegistrarInscripcionUseCase --> InscripcionRepository
-    RegistrarInscripcionUseCase --> ElegibilidadPort
-    RegistrarInscripcionUseCase ..> RegistrarInscripcionCommand
-    PostgresInscripcionRepository ..|> InscripcionRepository
-    ElegibilidadAdapter ..|> ElegibilidadPort
-    InscripcionController --> RegistrarInscripcionUseCase
-```
-
-### 4.1. Notación UML utilizada
-
-| Símbolo | Significado |
-|---|---|
-| Flecha continua | Asociación entre clases. |
-| Flecha discontinua | Dependencia o uso temporal. |
-| Triángulo hueco | Implementación de una interfaz. |
-| `<<interface>>` | Contrato sin implementación concreta. |
-| `<<enumeration>>` | Conjunto de valores definidos. |
-| `+` | Miembro público. |
-| `-` | Miembro privado. |
-
----
-
-## 5. Flujo de ejecución: registrar inscripción ordinaria
-
-### Diagrama de secuencia
-
-```mermaid
-sequenceDiagram
-    autonumber
-
-    actor P as Postulante
-    participant W as Aplicación Web
-    participant G as API Gateway HTTPS
-    participant C as InscripcionController
-    participant U as RegistrarInscripcionUseCase
-    participant E as ElegibilidadPort
-    participant D as Inscripcion
-    participant R as InscripcionRepository
-    participant DB as PostgreSQL
-
-    P->>W: Completar formulario
-    W->>G: POST /api/v1/inscripciones/ordinaria
-    G->>C: Invocar backend AWS Lambda
-    C->>U: ejecutar(command)
-
-    U->>E: verificar elegibilidad
-    E-->>U: Resultado de validación
-
-    alt Postulante no elegible
-        U-->>C: Error de validación
-        C-->>W: 422 Unprocessable Entity
-    else Postulante elegible
-        U->>R: existe(postulanteId, convocatoriaId)
-        R->>DB: SELECT inscripción
-        DB-->>R: Resultado
-        R-->>U: Existe / No existe
-
-        alt Inscripción duplicada
-            U-->>C: Conflicto
-            C-->>W: 409 Conflict
-        else Inscripción válida
-            U->>D: crear()
-            D-->>U: Inscripción pendiente de pago
-            U->>R: guardar(inscripcion)
-            R->>DB: INSERT inscripción
-            DB-->>R: Confirmación
-            R-->>U: Guardado
-            U-->>C: InscripcionId
-            C-->>W: 201 Created
-            W-->>P: Mostrar código y estado
-        end
-    end
-```
-
-### Descripción del flujo
-
-| Paso | Origen → Destino | Acción | Capa |
-|---|---|---|---|
-| 1 | Postulante → Aplicación Web | Completa los datos de inscripción. | Presentación web |
-| 2 | Aplicación Web → API Gateway | Envía solicitud mediante HTTPS. | Infraestructura AWS |
-| 3 | API Gateway → Controlador | Invoca la aplicación en AWS Lambda. | Presentación |
-| 4 | Controlador → Caso de uso | Solicita registrar la inscripción. | Presentación → Aplicación |
-| 5 | Caso de uso → ElegibilidadPort | Comprueba identidad validada, convocatoria y programa. | Aplicación → Puerto |
-| 6 | Caso de uso → Repositorio | Verifica que no exista una inscripción duplicada. | Aplicación → Dominio |
-| 7 | Caso de uso → Entidad | Crea una inscripción pendiente de pago. | Aplicación → Dominio |
-| 8 | Caso de uso → Repositorio | Solicita guardar la inscripción. | Aplicación → Dominio |
-| 9 | Repositorio → PostgreSQL | Registra la inscripción en una transacción. | Infraestructura |
-| 10 | Controlador → Aplicación Web | Devuelve HTTP 201 y el identificador. | Presentación |
-| 11 | Flujo alternativo | Si el postulante no es elegible, devuelve HTTP 422. | Aplicación |
-| 12 | Flujo alternativo | Si ya existe la inscripción, devuelve HTTP 409. | Aplicación |
-
-La inscripción se registra inicialmente como **pendiente de pago**. La confirmación del pago y la habilitación de la inscripción se gestionarán mediante el módulo Pagos, después de recibir una confirmación válida de la pasarela.
-
----
-
-## 6. Código de referencia
-
-Los siguientes fragmentos representan una implementación inicial en TypeScript. Son ejemplos de diseño y requieren completar validaciones, manejo de errores y adaptadores para su ejecución en producción.
-
-### 6.1. Dominio – Entidad Inscripción
-
-Archivo: `dominio/inscripcion.ts`
-
-```typescript
-import { randomUUID } from "node:crypto";
-import { EstadoInscripcion } from "./estado-inscripcion";
-
-export class Inscripcion {
-  private constructor(
-    public readonly id: string,
-    public readonly postulanteId: string,
-    public readonly convocatoriaId: string,
-    public readonly programaId: string,
-    private estado: EstadoInscripcion
-  ) {}
-
-  static crear(
-    postulanteId: string,
-    convocatoriaId: string,
-    programaId: string
-  ): Inscripcion {
-    if (!postulanteId || !convocatoriaId || !programaId) {
-      throw new Error("Los datos de inscripción son obligatorios");
-    }
-
-    return new Inscripcion(
-      randomUUID(),
-      postulanteId,
-      convocatoriaId,
-      programaId,
-      EstadoInscripcion.PENDIENTE_PAGO
-    );
-  }
-
-  confirmarPago(): void {
-    if (this.estado !== EstadoInscripcion.PENDIENTE_PAGO) {
-      throw new Error("La inscripción no está pendiente de pago");
-    }
-
-    this.estado = EstadoInscripcion.PAGO_CONFIRMADO;
-  }
-
-  obtenerEstado(): EstadoInscripcion {
-    return this.estado;
-  }
-}
-```
-
-Archivo: `dominio/estado-inscripcion.ts`
-
-```typescript
-export enum EstadoInscripcion {
-  PENDIENTE_PAGO = "PENDIENTE_PAGO",
-  PAGO_CONFIRMADO = "PAGO_CONFIRMADO",
-  CONFIRMADA = "CONFIRMADA",
-  ANULADA = "ANULADA"
-}
-```
-
-### 6.2. Dominio – Interfaces
-
-Archivo: `dominio/inscripcion-repository.ts`
-
-```typescript
-import { Inscripcion } from "./inscripcion";
-
-export interface InscripcionRepository {
-  guardar(inscripcion: Inscripcion): Promise<void>;
-
-  buscarPorId(id: string): Promise<Inscripcion | null>;
-
-  existe(
-    postulanteId: string,
-    convocatoriaId: string
-  ): Promise<boolean>;
-}
-```
-
-Archivo: `dominio/elegibilidad-port.ts`
-
-```typescript
-export interface ElegibilidadPort {
-  verificar(
-    postulanteId: string,
-    convocatoriaId: string,
-    programaId: string
-  ): Promise<boolean>;
-}
-```
-
-### 6.3. Aplicación – Caso de uso
-
-Archivo: `aplicacion/registrar-inscripcion.command.ts`
-
-```typescript
-export interface RegistrarInscripcionCommand {
-  postulanteId: string;
-  convocatoriaId: string;
-  programaId: string;
-}
-```
-
-Archivo: `aplicacion/registrar-inscripcion.use-case.ts`
-
-```typescript
-import { Inscripcion } from "../dominio/inscripcion";
-import { InscripcionRepository } from "../dominio/inscripcion-repository";
-import { ElegibilidadPort } from "../dominio/elegibilidad-port";
-import { RegistrarInscripcionCommand } from "./registrar-inscripcion.command";
-
-export class RegistrarInscripcionUseCase {
-  constructor(
-    private readonly repository: InscripcionRepository,
-    private readonly elegibilidad: ElegibilidadPort
-  ) {}
-
-  async ejecutar(
-    command: RegistrarInscripcionCommand
-  ): Promise<string> {
-    const esElegible = await this.elegibilidad.verificar(
-      command.postulanteId,
-      command.convocatoriaId,
-      command.programaId
-    );
-
-    if (!esElegible) {
-      throw new Error("El postulante no cumple los requisitos");
-    }
-
-    const existe = await this.repository.existe(
-      command.postulanteId,
-      command.convocatoriaId
-    );
-
-    if (existe) {
-      throw new Error("El postulante ya tiene una inscripción");
-    }
-
-    const inscripcion = Inscripcion.crear(
-      command.postulanteId,
-      command.convocatoriaId,
-      command.programaId
-    );
-
-    await this.repository.guardar(inscripcion);
-
-    return inscripcion.id;
-  }
-}
-```
-
-**Consideración:** La validación previa de duplicados no reemplaza una restricción única en PostgreSQL. El repositorio deberá garantizar la unicidad también ante solicitudes concurrentes.
-
-### 6.4. Infraestructura – Repositorio PostgreSQL
-
-Archivo: `infraestructura/postgres-inscripcion.repository.ts`
-
-```typescript
-import { Pool } from "pg";
-import { Inscripcion } from "../dominio/inscripcion";
-import { InscripcionRepository } from "../dominio/inscripcion-repository";
-
-export class PostgresInscripcionRepository
-  implements InscripcionRepository {
-
-  constructor(private readonly db: Pool) {}
-
-  async guardar(inscripcion: Inscripcion): Promise<void> {
-    await this.db.query(
-      `INSERT INTO inscripciones
-       (id, postulante_id, convocatoria_id, programa_id, estado)
-       VALUES ($1, $2, $3, $4, $5)`,
-      [
-        inscripcion.id,
-        inscripcion.postulanteId,
-        inscripcion.convocatoriaId,
-        inscripcion.programaId,
-        inscripcion.obtenerEstado()
-      ]
-    );
-  }
-
-  async existe(
-    postulanteId: string,
-    convocatoriaId: string
-  ): Promise<boolean> {
-    const resultado = await this.db.query(
-      `SELECT 1 FROM inscripciones
-       WHERE postulante_id = $1 AND convocatoria_id = $2
-       LIMIT 1`,
-      [postulanteId, convocatoriaId]
-    );
-
-    return (resultado.rowCount ?? 0) > 0;
-  }
-
-  async buscarPorId(id: string): Promise<Inscripcion | null> {
-    // Implementar reconstitución de la entidad desde PostgreSQL.
-    throw new Error("Método pendiente de implementación");
-  }
-}
-```
-
-### 6.5. Presentación – Controlador REST
-
-Archivo: `presentacion/inscripcion.controller.ts`
-
-```typescript
-import { Request, Response } from "express";
-import { RegistrarInscripcionUseCase } from "../aplicacion/registrar-inscripcion.use-case";
-
-export class InscripcionController {
-  constructor(
-    private readonly registrarInscripcion: RegistrarInscripcionUseCase
-  ) {}
-
-  registrar = async (
-    req: Request,
-    res: Response
-  ): Promise<void> => {
-    const inscripcionId = await this.registrarInscripcion.ejecutar({
-      postulanteId: req.user.id,
-      convocatoriaId: req.body.convocatoriaId,
-      programaId: req.body.programaId
-    });
-
-    res.status(201).json({
-      mensaje: "Inscripción registrada correctamente",
-      inscripcionId,
-      estado: "PENDIENTE_PAGO"
-    });
-  };
-}
-```
-
-El identificador del postulante debe obtenerse de una sesión autenticada y validada, no del cuerpo de la solicitud. La propiedad `req.user` requiere un middleware y una extensión de tipos de Express.
-
-### 6.6. Raíz de composición
-
-Archivo: `inscripcion-ordinaria.module.ts`
-
-```typescript
-import { Pool } from "pg";
-import { PostgresInscripcionRepository } from "./infraestructura/postgres-inscripcion.repository";
-import { ElegibilidadPort } from "./dominio/elegibilidad-port";
-import { RegistrarInscripcionUseCase } from "./aplicacion/registrar-inscripcion.use-case";
-import { InscripcionController } from "./presentacion/inscripcion.controller";
-
-export function crearModuloInscripcionOrdinaria(
-  db: Pool,
-  elegibilidad: ElegibilidadPort
-) {
-  const repository = new PostgresInscripcionRepository(db);
-
-  const registrarInscripcion = new RegistrarInscripcionUseCase(
-    repository,
-    elegibilidad
-  );
-
-  return {
-    controller: new InscripcionController(registrarInscripcion)
-  };
-}
-```
-
-El adaptador concreto de elegibilidad se inyectará desde la composición principal de la aplicación, utilizando los contratos públicos de los módulos Usuarios, Convocatorias y Configuración.
-
----
-
-## 7. Integración con AWS Lambda
-
-El backend se desplegará como una aplicación monolítica modular mediante AWS Lambda, utilizando Amazon API Gateway para exponer los endpoints REST.
-
-```mermaid
-flowchart TB
-    U["Postulante"]
-    WEB["Aplicación Web"]
-    API["Amazon API Gateway<br/>HTTPS / REST"]
-
-    subgraph AWS["AWS Lambda - Backend Monolítico Modular"]
-        CTRL["Controlador REST"]
-        UC["Caso de uso"]
-        DOM["Dominio"]
-        REP["Repositorio PostgreSQL"]
-    end
-
-    DB[("Amazon RDS PostgreSQL")]
-    CACHE[("Redis - ElastiCache")]
-    LOG["Amazon CloudWatch"]
-
-    U --> WEB
-    WEB -->|"HTTPS"| API
-    API --> CTRL
-    CTRL --> UC
-    UC --> DOM
-    UC --> REP
-    REP --> DB
-    REP -.-> CACHE
-    AWS -.-> LOG
-```
-
-### Consideraciones técnicas
-
-- **AWS Lambda:** ejecutará el backend como una única unidad desplegable.
-- **API Gateway:** recibirá las solicitudes REST mediante HTTPS.
-- **PostgreSQL:** almacenará la información institucional.
-- **Redis:** permitirá optimizar consultas frecuentes cuando se configure el caché.
-- **RDS Proxy:** podrá utilizarse para gestionar conexiones concurrentes a PostgreSQL.
-- **CloudWatch:** registrará métricas, errores y eventos.
-- **AWS Secrets Manager:** protegerá las credenciales de base de datos y las claves de servicios externos.
-
----
-
-## 8. Aplicación de la estructura a los 14 módulos
+El sistema estará compuesto por 14 módulos funcionales, organizados dentro de una única aplicación backend.
 
 | Código | Módulo | Responsabilidad principal |
 |---|---|---|
-| M01 | Convocatorias | Gestionar procesos, cronogramas y periodos de admisión. |
-| M02 | Usuarios | Registrar postulantes y gestionar la validación de identidad. |
-| M03 | Inscripción Ordinaria | Gestionar postulaciones de la modalidad ordinaria. |
+| M01 | Convocatorias | Gestionar periodos, cronogramas y procesos de admisión. |
+| M02 | Usuarios | Registrar usuarios y gestionar sus datos. |
+| M03 | Inscripción Ordinaria | Administrar postulaciones de la modalidad ordinaria. |
 | M04 | Inscripción Exonerados | Gestionar postulaciones de modalidades especiales. |
-| M05 | Pagos | Gestionar órdenes, confirmaciones y conciliaciones. |
-| M06 | Expedientes | Gestionar documentos, evaluaciones y observaciones. |
-| M07 | Exámenes | Programar evaluaciones de admisión. |
-| M08 | Sedes y Aulas | Administrar ambientes y asignar postulantes. |
-| M09 | Resultados | Procesar calificaciones, méritos y resultados oficiales. |
-| M10 | Chatbot IA | Proporcionar orientación y seguimiento mediante OpenRouter API. |
-| M11 | Notificaciones | Enviar avisos mediante correo y otros canales habilitados. |
-| M12 | Reportes | Generar estadísticas e informes administrativos. |
-| M13 | Seguridad | Gestionar autenticación, autorización y roles. |
-| M14 | Configuración | Administrar parámetros e integraciones del sistema. |
+| M05 | Pagos | Registrar y verificar los pagos de inscripción. |
+| M06 | Expedientes | Administrar documentos y observaciones. |
+| M07 | Exámenes | Programar las evaluaciones de admisión. |
+| M08 | Sedes y Aulas | Gestionar ambientes y asignaciones. |
+| M09 | Resultados | Procesar y publicar resultados de admisión. |
+| M10 | Chatbot IA | Orientar a los postulantes mediante OpenRouter API. |
+| M11 | Notificaciones | Enviar avisos y correos electrónicos. |
+| M12 | Reportes | Generar estadísticas e informes. |
+| M13 | Seguridad | Administrar autenticación, roles y permisos. |
+| M14 | Configuración | Gestionar parámetros generales del sistema. |
 
-Todos los módulos deberán seguir la estructura:
+Cada módulo tendrá responsabilidades específicas y se comunicará con los demás mediante interfaces definidas, evitando dependencias directas innecesarias.
 
-```text
-modulo/
-├── dominio/
-├── aplicacion/
-├── infraestructura/
-├── presentacion/
-├── modulo.module.ts
-└── index.ts
-```
+## 7.7. Integración con la infraestructura AWS
 
----
+El sistema utilizará diferentes servicios tecnológicos para ejecutar sus funcionalidades.
 
-## 9. Resumen
-
-| Aspecto | Decisión |
+| Tecnología | Función |
 |---|---|
-| Arquitectura | Monolito Modular por Capas |
-| Enfoque | Clean Architecture |
-| Organización | 14 módulos funcionales |
-| Backend propuesto | Node.js + TypeScript |
-| Despliegue | AWS Lambda |
-| Comunicación | API REST + HTTPS |
-| Persistencia | Amazon RDS PostgreSQL |
-| Caché | Redis |
-| Integraciones | RENIEC, pasarela de pagos y OpenRouter API |
-| Referencia de diseño | Módulo Inscripción Ordinaria |
-| Nivel C4 | Nivel 4 – Código |
+| Angular | Desarrollo de la interfaz web. |
+| Node.js y TypeScript | Implementación del backend modular. |
+| Amazon API Gateway | Recepción de solicitudes REST mediante HTTPS. |
+| AWS Lambda | Ejecución del backend. |
+| Amazon RDS PostgreSQL | Almacenamiento de información. |
+| Amazon S3 | Almacenamiento de documentos y fichas PDF. |
+| Amazon ElastiCache Redis | Almacenamiento temporal en caché. |
+| Amazon SQS | Procesamiento de tareas asíncronas. |
+| RENIEC | Validación de identidad. |
+| Pasarela de pagos | Procesamiento y confirmación de pagos. |
+| OpenRouter API | Integración del chatbot de inteligencia artificial. |
+| Amazon SES | Envío de correos electrónicos. |
 
-## Conclusión
+La comunicación con estos servicios se realizará mediante adaptadores implementados en la capa de infraestructura.
 
-El diseño interno establece una organización uniforme para los módulos del Sistema Integral de Gestión del Proceso de Admisión – UNSCH.
+Los servicios de caché y mensajería podrán incorporarse progresivamente de acuerdo con las necesidades del sistema.
 
-La separación de responsabilidades permitirá mantener las reglas de negocio independientes de la infraestructura, facilitar las pruebas y conservar una única aplicación desplegable en AWS Lambda.
+## 7.8. Reglas de diseño
 
-Los fragmentos de código presentados constituyen una referencia inicial de arquitectura y requieren completar las implementaciones necesarias antes de utilizarse en producción.
+Para mantener una estructura organizada se establecerán las siguientes reglas:
+
+1. Cada módulo tendrá responsabilidades claramente definidas.
+2. La lógica de negocio permanecerá separada de la infraestructura.
+3. Los controladores REST no accederán directamente a la base de datos.
+4. Los casos de uso coordinarán los procesos del sistema.
+5. Los repositorios implementarán las interfaces definidas en las capas internas.
+6. Los módulos evitarán dependencias circulares.
+7. Todas las funcionalidades se integrarán en un único backend desplegable.
+
+Estas reglas permitirán aplicar los principios de Clean Architecture dentro del Monolito Modular por Capas.
+
+## 7.9. Conclusión
+
+El diseño interno de módulos permitirá desarrollar el Sistema Integral de Gestión del Proceso de Admisión UNSCH de manera organizada, modular y mantenible.
+
+La aplicación de Clean Architecture facilitará la separación entre las reglas de negocio y los detalles tecnológicos, mientras que el Monolito Modular por Capas permitirá integrar las funcionalidades dentro de una sola aplicación backend.
+
+Esta propuesta simplificará el desarrollo, las pruebas y el despliegue del sistema, además de facilitar futuras mejoras y ampliaciones.
