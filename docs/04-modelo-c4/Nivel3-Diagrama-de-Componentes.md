@@ -29,135 +29,62 @@ El backend está diseñado como un **Monolito Modular por Capas**, organizado in
 
 ### Diagrama de componentes del Backend API REST – UNSCH
 
+
 ```mermaid
 flowchart TB
+    WEB["Aplicación Web Angular"]
+    API["Amazon API Gateway<br/>HTTPS / REST"]
 
-    WEB["Aplicación Web<br/>Postulantes y Personal UNSCH"]
-    GATEWAY["Amazon API Gateway<br/>HTTPS / REST"]
-
-    subgraph BACKEND["Backend API REST – AWS Lambda<br/>Monolito Modular por Capas"]
+    subgraph BACKEND["Backend API REST - AWS Lambda<br/>Monolito Modular por Capas"]
         direction TB
 
-        API["API REST<br/>Controladores, rutas, validación y autenticación"]
+        CTRL["Capa de interfaces<br/>Controladores REST y autenticación"]
 
-        subgraph MODULOS["Módulos Funcionales del Sistema"]
-            direction TB
+        APP["Capa de aplicación<br/>Casos de uso"]
 
-            subgraph GRUPO1["Gestión de Admisión"]
-                direction LR
-                M01["M01<br/>Convocatorias"]
-                M02["M02<br/>Usuarios e Identidad"]
-                M03["M03<br/>Inscripción Ordinaria"]
-                M04["M04<br/>Inscripción Exonerados"]
-                M05["M05<br/>Pagos"]
-            end
-
-            subgraph GRUPO2["Gestión Académica y Evaluación"]
-                direction LR
-                M06["M06<br/>Expedientes"]
-                M07["M07<br/>Exámenes"]
-                M08["M08<br/>Sedes y Aulas"]
-                M09["M09<br/>Resultados"]
-            end
-
-            subgraph GRUPO3["Servicios de Soporte"]
-                direction LR
-                M10["M10<br/>Chatbot IA"]
-                M11["M11<br/>Notificaciones"]
-                M12["M12<br/>Reportes"]
-                M13["M13<br/>Seguridad y Roles"]
-                M14["M14<br/>Configuración"]
-            end
+        subgraph MODULOS["Capa de dominio - Módulos funcionales"]
+            direction LR
+            M1["Gestión de Admisión<br/>Convocatorias, Usuarios,<br/>Inscripciones y Pagos"]
+            M2["Gestión Académica<br/>Expedientes, Exámenes,<br/>Sedes, Aulas y Resultados"]
+            M3["Servicios de Soporte<br/>Chatbot IA, Notificaciones,<br/>Reportes, Seguridad y Configuración"]
         end
 
-        INFRA["Infraestructura Compartida<br/>Repositorios, adaptadores y servicios técnicos"]
+        INFRA["Capa de infraestructura<br/>Repositorios y adaptadores"]
+
+        CTRL --> APP
+        APP --> M1
+        APP --> M2
+        APP --> M3
+        APP --> INFRA
     end
 
-    DB[("Amazon RDS<br/>PostgreSQL")]
-    CACHE[("Amazon ElastiCache<br/>Redis")]
-    STORAGE[("Amazon S3<br/>Documentos")]
-    QUEUE["Amazon SQS<br/>Mensajería"]
+    subgraph AWS["Servicios AWS"]
+        DB[("Amazon RDS PostgreSQL")]
+        CACHE[("Amazon ElastiCache Redis")]
+        S3["Amazon S3"]
+        SQS["Amazon SQS"]
+    end
 
-    RENIEC["RENIEC<br/>Validación de DNI"]
-    PAYMENT["Pasarela de Pagos"]
-    OPENROUTER["OpenRouter API"]
-    EMAIL["Servicio de Correo"]
+    EXT["Servicios externos<br/>RENIEC, Pasarela de Pagos,<br/>OpenRouter y Correo"]
 
-    WEB -->|"HTTPS / JSON"| GATEWAY
-    GATEWAY -->|"Invoca Lambda"| API
-
-    API --> M01
-    API --> M02
-    API --> M03
-    API --> M04
-    API --> M05
-    API --> M06
-    API --> M07
-    API --> M08
-    API --> M09
-    API --> M10
-    API --> M11
-    API --> M12
-    API --> M13
-    API --> M14
-
-    M03 -->|"Consulta convocatoria"| M01
-    M03 -->|"Valida postulante"| M02
-    M04 -->|"Valida postulante"| M02
-    M04 -->|"Consulta convocatoria"| M01
-
-    M05 -->|"Confirma pagos"| M03
-    M05 -->|"Confirma pagos"| M04
-
-    M06 -->|"Consulta inscripciones"| M03
-    M06 -->|"Consulta inscripciones"| M04
-
-    M07 -->|"Solicita asignaciones"| M08
-    M09 -->|"Consulta evaluaciones"| M07
-
-    M10 -->|"Consulta información pública"| M01
-    M11 -->|"Recibe solicitudes de aviso"| M05
-    M11 -->|"Recibe solicitudes de aviso"| M09
-
-    M12 -->|"Consulta información autorizada"| M01
-    M12 -->|"Consulta información autorizada"| M09
-
-    M02 -->|"Validación externa"| RENIEC
-    M05 -->|"Procesamiento de pagos"| PAYMENT
-    M10 -->|"Consultas de IA"| OPENROUTER
-    M11 -->|"Envío de mensajes"| EMAIL
-
-    M01 --> INFRA
-    M02 --> INFRA
-    M03 --> INFRA
-    M04 --> INFRA
-    M05 --> INFRA
-    M06 --> INFRA
-    M07 --> INFRA
-    M08 --> INFRA
-    M09 --> INFRA
-    M10 --> INFRA
-    M11 --> INFRA
-    M12 --> INFRA
-    M13 --> INFRA
-    M14 --> INFRA
+    WEB -->|"HTTPS / JSON"| API
+    API -->|"Invoca AWS Lambda"| CTRL
 
     INFRA --> DB
     INFRA --> CACHE
-    INFRA --> STORAGE
-    INFRA --> QUEUE
+    INFRA --> S3
+    INFRA --> SQS
+    INFRA --> EXT
 
-    classDef principal fill:#2563eb,color:#ffffff,stroke:#1d4ed8,stroke-width:2px
+    classDef principal fill:#2563eb,color:#ffffff,stroke:#1d4ed8
     classDef modulo fill:#bfdbfe,color:#1e3a8a,stroke:#3b82f6
     classDef infraestructura fill:#ddd6fe,color:#4c1d95,stroke:#7c3aed
-    classDef externo fill:#929292,color:#ffffff,stroke:#666666
-    classDef datos fill:#c7d2fe,color:#312e81,stroke:#6366f1
+    classDef externo fill:#e5e7eb,color:#111827,stroke:#6b7280
 
-    class WEB,GATEWAY,API principal
-    class M01,M02,M03,M04,M05,M06,M07,M08,M09,M10,M11,M12,M13,M14 modulo
+    class WEB,API,CTRL,APP principal
+    class M1,M2,M3 modulo
     class INFRA infraestructura
-    class DB,CACHE,STORAGE,QUEUE datos
-    class RENIEC,PAYMENT,OPENROUTER,EMAIL externo
+    class DB,CACHE,S3,SQS,EXT externo
 ```
 
 **Descripción:** El backend está organizado en 14 módulos funcionales que se ejecutan dentro de una única aplicación AWS Lambda. Los módulos se comunican mediante interfaces públicas y utilizan repositorios y adaptadores para acceder a los servicios de infraestructura y sistemas externos.
