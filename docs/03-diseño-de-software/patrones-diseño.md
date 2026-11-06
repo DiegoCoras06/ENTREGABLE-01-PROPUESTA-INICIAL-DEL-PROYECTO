@@ -1,172 +1,209 @@
-# Patrones de Diseño
+# 8. Patrones de Diseño
 
-## Sistema Integral de Gestión del Proceso de Admisión – UNSCH
+## Sistema de Gestión del Proceso de Admisión – UNSCH
 
-## 1. Objetivo
+## 8.1. Objetivo
 
-Documentar los patrones de diseño aplicados en el backend del Sistema Integral de Gestión del Proceso de Admisión – UNSCH, indicando dónde se utilizan, qué problemas resuelven y con qué tecnologías se implementan, para garantizar un desarrollo organizado, mantenible y uniforme.
+Definir los patrones de diseño que se utilizarán en el sistema para organizar las responsabilidades, reducir el acoplamiento y facilitar las pruebas y el mantenimiento.
 
-## 2. Contexto
+Esta propuesta corresponde al diseño arquitectónico inicial del Sprint 1.
 
-- **Estilo arquitectónico:** Monolito Modular por Capas.
-- **Enfoque interno:** Clean Architecture.
-- **Backend:** Node.js + TypeScript + Express.
-- **Despliegue:** AWS Lambda.
-- **Comunicación:** API REST mediante HTTPS.
-- **Base de datos:** Amazon RDS PostgreSQL.
-- **Caché:** Redis mediante Amazon ElastiCache.
-- **Almacenamiento:** Amazon S3.
-- **Inteligencia artificial:** OpenRouter API.
-- **Base arquitectónica:** Diagrama de componentes C4 – Nivel 3.
-- **Organización:** 14 módulos funcionales.
+## 8.2. Contexto arquitectónico
 
-## 3. Patrones aplicados
-
-| Patrón | Dónde se usa | Problema que resuelve | Se implementa con | Archivos en el código |
-|---|---|---|---|---|
-| Adaptador | Usuarios → RENIEC | El servicio de validación de identidad utiliza una interfaz externa. | API REST mediante HTTPS. | `identity-port.ts`, `reniec.adapter.ts` |
-| Adaptador | Pagos → Pasarela de pagos | La pasarela tiene sus propios métodos de procesamiento y confirmación de pagos. | SDK o API REST mediante HTTPS. | `payment-port.ts`, `payment-gateway.adapter.ts` |
-| Adaptador | Chatbot IA → OpenRouter API | La API de inteligencia artificial utiliza solicitudes y respuestas específicas. | API REST de OpenRouter mediante HTTPS. | `ai-port.ts`, `openrouter.adapter.ts` |
-| Adaptador | Notificaciones → Servicio de correo | El proveedor de correo utiliza una interfaz propia para enviar mensajes. | Amazon SES o API de correo. | `notification-port.ts`, `email.adapter.ts` |
-| Repositorio | Módulos de negocio → PostgreSQL | Evitar que las reglas de negocio dependan directamente de consultas SQL. | PostgreSQL mediante `pg` u ORM. | `inscripcion-repository.ts`, `postgres-inscripcion.repository.ts` |
-| Decorador | Convocatorias y Configuración → Redis | Reducir las consultas repetitivas a la base de datos. | Redis mediante Amazon ElastiCache. | `cached-convocatoria.repository.ts` |
-| Inyección de dependencias | Todos los módulos | Evitar el acoplamiento entre casos de uso e implementaciones concretas. | Interfaces de TypeScript y composición de objetos. | `inscripcion-ordinaria.module.ts`, `pagos.module.ts` |
-| Fachada | Comunicación entre módulos | Proporcionar una interfaz controlada para utilizar funcionalidades de otros módulos. | Servicios y contratos públicos internos. | `usuarios.facade.ts`, `convocatorias.facade.ts` |
-
-## 4. Cómo funciona cada patrón
-
-| Patrón | En pocas palabras |
+| Aspecto | Definición |
 |---|---|
-| Adaptador | El sistema solicita `validarDNI(dni)` y el adaptador transforma la operación en una petición HTTPS compatible con RENIEC. |
-| Adaptador | El módulo Pagos solicita `crearPago(monto)` y el adaptador realiza la operación correspondiente en la pasarela de pagos. |
-| Adaptador | El chatbot solicita `generarRespuesta(mensaje)` y el adaptador se comunica con OpenRouter API. |
-| Repositorio | El caso de uso solicita `guardar(inscripcion)` y el repositorio ejecuta la operación en PostgreSQL. |
-| Decorador | Primero consulta Redis; si no encuentra la información, consulta PostgreSQL y almacena temporalmente el resultado en caché. |
-| Inyección de dependencias | El caso de uso recibe interfaces mediante su constructor, sin crear directamente conexiones o servicios externos. |
-| Fachada | Un módulo utiliza una interfaz pública para consultar funcionalidades de otro módulo sin acceder directamente a sus componentes internos. |
+| Estilo arquitectónico | Monolito Modular por Capas. |
+| Enfoque interno | Clean Architecture. |
+| Organización funcional | 12 módulos integrados en una aplicación backend. |
+| Frontend | Angular. |
+| Backend | Node.js, TypeScript y Express. |
+| Acceso al backend | Amazon API Gateway y AWS Lambda. |
+| Comunicación | API REST mediante HTTPS. |
+| Persistencia | Amazon RDS PostgreSQL. |
+| Almacenamiento de documentos | Amazon S3 privado. |
+| Procesamiento asíncrono | Outbox en PostgreSQL y Amazon SQS. |
+| Integraciones | RENIEC vía apiperu, Izipay micuentaweb, Culqi, OpenRouter API y Amazon SES. |
 
-## 5. Diagrama de patrones de diseño
+## 8.3. Patrones seleccionados
+
+| Patrón o mecanismo | Dónde se utilizará | Problema que resolverá |
+|---|---|---|
+| Adaptador | Integraciones de identidad, pagos, chatbot, correo y almacenamiento. | Evitar que los casos de uso dependan de los protocolos y SDK de cada proveedor. |
+| Repositorio | Persistencia de los módulos que gestionen información. | Separar las operaciones de negocio de las consultas y detalles de PostgreSQL. |
+| Fábrica simple | Creación y selección de adaptadores. | Centralizar la elección de proveedores reales o simulados según la configuración. |
+| Inyección de dependencias | Composición de los módulos y casos de uso. | Proporcionar las dependencias mediante contratos sin crearlas dentro de la lógica de negocio. |
+| Fachada | Acceso público a las funcionalidades de cada módulo. | Permitir la colaboración entre módulos sin exponer sus componentes internos. |
+| Publicación y suscripción | Comunicación de eventos entre módulos. | Permitir que varios módulos reaccionen a un hecho sin acoplarlos directamente al productor. |
+| Transactional Outbox | Operaciones que deban guardar datos y emitir eventos. | Evitar que se confirme un cambio de negocio sin conservar el evento que debe comunicarse. |
+
+La inyección de dependencias es un mecanismo de diseño. Publicación y suscripción y Transactional Outbox son patrones de comunicación y persistencia que complementarán los patrones de diseño del sistema.
+
+## 8.4. Aplicación de los patrones
+
+### Adaptador
+
+Se definirán interfaces internas para representar los servicios que necesita el sistema. Los adaptadores de infraestructura convertirán estas operaciones en solicitudes compatibles con cada proveedor.
+
+| Interfaz propuesta | Adaptador | Módulo relacionado |
+|---|---|---|
+| `IdentityProvider` | Consulta de identidad mediante apiperu. | Usuarios. |
+| `PaymentGateway` | Izipay micuentaweb para tarjetas. | Pagos. |
+| `YapeGateway` | Culqi para Yape. | Pagos. |
+| `LlmProvider` | OpenRouter API. | Chatbot IA. |
+| `EmailSender` | Amazon SES. | Notificaciones. |
+| `FileStorage` | Amazon S3 privado. | Expedientes e Inscripciones. |
+
+Los casos de uso utilizarán estas interfaces. Las credenciales y los detalles de comunicación permanecerán en la infraestructura del backend.
+
+### Repositorio
+
+Los módulos utilizarán contratos de repositorio para consultar y almacenar información sin depender directamente de PostgreSQL.
+
+Por ejemplo, Inscripciones podrá utilizar una interfaz `InscripcionesRepository` con operaciones como:
+
+- Buscar una inscripción por postulante y convocatoria.
+- Registrar una inscripción.
+- Consultar su estado.
+- Guardar una transición de estado válida.
+
+La infraestructura implementará estas operaciones. Los procesos que requieran modificar varios registros y guardar eventos compartirán una misma transacción.
+
+### Fábrica simple
+
+Las fábricas permitirán construir los adaptadores correspondientes a la configuración del entorno.
+
+Por ejemplo, una fábrica podrá proporcionar un proveedor de identidad simulado durante las pruebas y el adaptador de apiperu cuando se utilice el servicio externo.
+
+La selección se realizará en la composición de la aplicación, sin introducir condiciones sobre proveedores dentro de las reglas de negocio.
+
+### Inyección de dependencias
+
+Los casos de uso recibirán sus colaboradores mediante parámetros o constructores.
+
+Por ejemplo, Registrar Inscripción recibirá los contratos necesarios para consultar convocatorias, verificar identidad y guardar la inscripción.
+
+Este mecanismo permitirá sustituir las implementaciones externas por versiones controladas durante las pruebas.
+
+### Fachada
+
+Cada módulo expondrá una interfaz pública con las operaciones que otros módulos podrán utilizar.
+
+Por ejemplo, Convocatorias ofrecerá consultas sobre la convocatoria vigente y sus condiciones. Inscripciones utilizará esas consultas sin importar clases internas ni acceder directamente a sus tablas.
+
+El archivo `index.ts` podrá exportar esta interfaz pública y participar en la composición del módulo. La fachada estará constituida por el contrato de operaciones expuesto.
+
+### Publicación y suscripción
+
+Los módulos comunicarán hechos relevantes mediante eventos.
+
+| Evento propuesto | Productor | Consumidores principales |
+|---|---|---|
+| `InscripcionRegistrada` | Inscripciones. | Notificaciones. |
+| `PagoConfirmado` | Pagos. | Inscripciones y Notificaciones. |
+| `ExpedienteEvaluado` | Expedientes. | Inscripciones y Notificaciones. |
+| `AulaAsignada` | Exámenes, Sedes y Aulas. | Notificaciones. |
+| `ResultadosPublicados` | Resultados. | Notificaciones. |
+
+Cada consumidor ejecutará su propia responsabilidad. Por ejemplo, ante `PagoConfirmado`, Inscripciones verificará si corresponde actualizar la habilitación del postulante y Notificaciones enviará la comunicación pertinente.
+
+El pago confirmado no sustituirá los requisitos documentales que correspondan a la modalidad.
+
+### Transactional Outbox
+
+Los eventos se guardarán en una tabla Outbox de PostgreSQL dentro de la misma transacción que la operación de negocio.
+
+Un mecanismo de despacho enviará posteriormente los eventos a Amazon SQS para su procesamiento asíncrono.
+
+La entrega podrá repetirse, por lo que los consumidores deberán aplicar idempotencia. También se establecerán reintentos controlados y seguimiento de errores.
+
+Amazon SQS transportará los mensajes; la lógica para distribuirlos a los consumidores correspondientes se definirá en la aplicación. Una cola por sí sola no realiza difusión a todos los suscriptores.
+
+## 8.5. Diagrama de dependencias
 
 ```mermaid
 flowchart TB
-    WEB["Aplicación Web<br/>Postulantes y personal UNSCH"]
-    API["Amazon API Gateway<br/>REST + HTTPS"]
-
-    subgraph BACKEND["AWS Lambda - Monolito Modular"]
-        direction TB
-
-        CTRL["Controladores REST"]
-
-        subgraph APP["Capa de Aplicación"]
-            UC["Casos de uso"]
-            FAC["Fachadas entre módulos"]
-        end
-
-        subgraph DOM["Capa de Dominio"]
-            PORT["Interfaces y puertos"]
-            ENT["Entidades y reglas de negocio"]
-        end
-
-        subgraph INFRA["Capa de Infraestructura"]
-            REP["Patrón Repositorio"]
-            ADP["Patrón Adaptador"]
-            CACHE["Patrón Decorador"]
-        end
-
-        COMP["Inyección de dependencias<br/>Raíz de composición"]
+    subgraph INTERNA["Capas internas"]
+        UC["Casos de uso"]
+        DOM["Entidades y reglas"]
+        PORT["Contratos de persistencia e integración"]
+        UC --> DOM
+        UC --> PORT
     end
 
-    DB[("Amazon RDS PostgreSQL")]
-    REDIS[("Redis - ElastiCache")]
+    subgraph EXTERNA["Capas externas"]
+        CTRL["Controladores REST"]
+        REP["Repositorios"]
+        ADP["Adaptadores externos"]
+    end
 
-    RENIEC["RENIEC"]
-    PAGOS["Pasarela de pagos"]
-    IA["OpenRouter API"]
-    EMAIL["Servicio de correo"]
-
-    WEB -->|"HTTPS"| API
-    API --> CTRL
     CTRL --> UC
-    UC --> ENT
-    UC --> PORT
-    UC --> FAC
-
-    REP -.->|"Implementa puertos"| PORT
-    ADP -.->|"Implementa puertos"| PORT
-    CACHE --> REP
-
-    REP --> DB
-    CACHE --> REDIS
-
-    ADP -->|"HTTPS"| RENIEC
-    ADP -->|"HTTPS"| PAGOS
-    ADP -->|"HTTPS"| IA
-    ADP -->|"HTTPS"| EMAIL
-
-    COMP -.-> CTRL
-    COMP -.-> UC
-    COMP -.-> REP
-    COMP -.-> ADP
-
-    classDef principal fill:#3d6cba,color:#fff,stroke:#28539b
-    classDef componente fill:#9fc1ed,color:#102b50,stroke:#6a95cc
-    classDef externo fill:#929292,color:#fff,stroke:#777
-
-    class WEB,API,CTRL principal
-    class UC,FAC,PORT,ENT,REP,ADP,CACHE,COMP componente
-    class RENIEC,PAGOS,IA,EMAIL externo
+    REP -.->|"Implementa"| PORT
+    ADP -.->|"Implementa"| PORT
 ```
 
-**Nota:** Las flechas continuas representan principalmente el flujo de utilización. Las flechas discontinuas representan implementación de contratos o composición de dependencias. Las reglas de dependencia del código se mantienen conforme a Clean Architecture.
+Las flechas continuas representan dependencias de uso y las discontinuas representan implementación de contratos.
 
-## 6. Beneficios de los patrones
+La infraestructura dependerá de los contratos internos. Los casos de uso no dependerán de implementaciones concretas de PostgreSQL ni de proveedores externos.
 
-- **Adaptador:** permite cambiar RENIEC, la pasarela de pagos, OpenRouter API o el servicio de correo sin modificar las reglas de negocio.
-- **Repositorio:** mantiene el acceso a PostgreSQL separado del dominio.
-- **Decorador:** permite utilizar Redis para mejorar el rendimiento sin modificar la lógica principal.
-- **Inyección de dependencias:** facilita las pruebas unitarias mediante implementaciones simuladas.
-- **Fachada:** reduce el acoplamiento entre los 14 módulos funcionales.
+## 8.6. Ejemplo: confirmación de un pago
 
-## 7. Patrones previstos para las siguientes iteraciones
+1. El adaptador recibirá o consultará la confirmación de la pasarela.
+2. El módulo Pagos verificará la autenticidad de la respuesta y los datos de la transacción.
+3. Se comprobará si el pago ya fue procesado para evitar duplicidades.
+4. En una misma transacción se guardarán la confirmación y el evento `PagoConfirmado` en Outbox.
+5. El mecanismo de despacho enviará el evento a Amazon SQS.
+6. Los consumidores procesarán el evento de forma idempotente.
+7. Inscripciones verificará los requisitos de habilitación y actualizará el estado cuando corresponda.
+8. Notificaciones gestionará el envío del correo mediante Amazon SES.
 
-| Patrón | Dónde se aplicaría | Cuándo |
+## 8.7. Relación con los 12 módulos
+
+| Código | Módulo | Patrones o mecanismos principales |
 |---|---|---|
-| Observador | Inscripciones y Pagos → Notificaciones | Cuando se implementen eventos de confirmación de inscripción y pago. |
-| Fábrica | Inscripción Ordinaria y Exonerados | Cuando la creación de inscripciones requiera reglas específicas según la modalidad. |
-| Estrategia | Evaluación de expedientes | Cuando existan diferentes criterios de evaluación según la modalidad de admisión. |
-| Estado | Inscripciones y Expedientes | Cuando aumente la complejidad de las transiciones entre estados. |
-| Fachada | Comunicación entre módulos | Cuando sea necesario ampliar las interfaces públicas internas. |
+| M01 | Convocatorias | Repositorio, Fachada e Inyección de dependencias. |
+| M02 | Usuarios | Adaptador de identidad, Repositorio e Inyección de dependencias. |
+| M03 | Inscripciones | Repositorio, Fachada, Publicación y suscripción y Outbox. |
+| M04 | Pagos | Adaptador, Fábrica simple, Repositorio y Outbox. |
+| M05 | Expedientes | Repositorio, Adaptador de almacenamiento y Outbox. |
+| M06 | Exámenes, Sedes y Aulas | Repositorio, Fachada y Outbox. |
+| M07 | Resultados | Repositorio, Fachada y Outbox. |
+| M08 | Chatbot IA | Adaptador, Fábrica simple e Inyección de dependencias. |
+| M09 | Notificaciones | Adaptador de correo, Publicación y suscripción e Inyección de dependencias. |
+| M10 | Reportes | Fachada e Inyección de dependencias para consultas autorizadas. |
+| M11 | Seguridad | Fachada, Repositorio e Inyección de dependencias. |
+| M12 | Configuración | Repositorio, Fachada e Inyección de dependencias. |
 
-## 8. Relación con las decisiones arquitectónicas
+Los patrones se aplicarán cuando exista una necesidad concreta. No se requerirá crear las mismas clases en todos los módulos.
 
-| Patrón | Decisión arquitectónica relacionada |
+## 8.8. Reglas de aplicación
+
+1. Los controladores delegarán las operaciones en los casos de uso.
+2. Los contratos pertenecerán a las capas internas que los necesiten.
+3. Los repositorios y adaptadores se implementarán en infraestructura.
+4. Las fábricas y la composición se mantendrán fuera del dominio.
+5. Los módulos colaborarán mediante sus interfaces públicas o eventos.
+6. Ningún módulo modificará directamente las tablas de otro.
+7. Las operaciones de negocio y sus eventos se guardarán de forma atómica cuando corresponda.
+8. Los consumidores admitirán mensajes repetidos sin duplicar efectos.
+9. Las credenciales externas permanecerán en el backend.
+10. Las pruebas verificarán reglas de negocio, contratos y escenarios de falla.
+
+## 8.9. Relación con los atributos de calidad
+
+| Atributo | Contribución del diseño |
 |---|---|
-| Adaptador | ADR-007 - Integración mediante interfaces y adaptadores |
-| Repositorio | ADR-002 - Clean Architecture y ADR-004 - PostgreSQL |
-| Decorador | ADR-005 - Estrategia de caché mediante Redis |
-| Inyección de dependencias | ADR-001 - Monolito Modular y ADR-002 - Clean Architecture |
-| Fachada | ADR-001 - Monolito Modular por Capas |
-| Observador | ADR-009 - Comunicación asíncrona mediante eventos |
+| Rendimiento | Las tareas complementarias podrán ejecutarse de forma asíncrona. |
+| Disponibilidad | Los eventos persistidos permitirán continuar tareas cuando se recuperen los servicios. |
+| Escalabilidad | SQS permitirá regular el procesamiento de tareas, respetando la capacidad de PostgreSQL. |
+| Seguridad | Los adaptadores centralizarán las credenciales y la comunicación con proveedores. |
+| Mantenibilidad | Adaptador, Repositorio y Fachada reducirán el acoplamiento. |
+| Integridad | Las transacciones y Outbox mantendrán consistencia entre cambios y eventos. |
+| Usabilidad | Los errores controlados permitirán comunicar estados comprensibles al usuario. |
+| Interoperabilidad | Los adaptadores normalizarán el intercambio con servicios externos. |
+| Confiabilidad | La idempotencia, los reintentos y la persistencia de eventos reducirán pérdidas y duplicidades. |
 
-## 9. Resumen
+## 8.10. Alcance del Sprint 1
 
-| Aspecto | Descripción |
-|---|---|
-| Arquitectura | Monolito Modular por Capas |
-| Enfoque | Clean Architecture |
-| Patrones principales | Adaptador, Repositorio, Decorador, Inyección de dependencias y Fachada |
-| Patrones previstos | Observador, Fábrica, Estrategia y Estado |
-| Backend | Node.js + TypeScript + Express |
-| Despliegue | AWS Lambda |
-| Comunicación | API REST mediante HTTPS |
-| Base de datos | Amazon RDS PostgreSQL |
-| Caché | Redis |
-| Integraciones | RENIEC, pasarela de pagos, OpenRouter API y correo |
+En el Sprint 1 se definirán los patrones seleccionados, sus responsabilidades y los contratos principales.
 
-## 10. Conclusión
-
-La aplicación de patrones de diseño permitirá mantener una estructura uniforme, reducir el acoplamiento entre componentes y facilitar el mantenimiento del Sistema Integral de Gestión del Proceso de Admisión – UNSCH.
-
-Los patrones Adaptador, Repositorio, Decorador, Inyección de dependencias y Fachada se consideran parte del diseño propuesto. Su implementación concreta deberá verificarse durante el desarrollo.
-
-El sistema conservará una arquitectura de Monolito Modular por Capas, utilizando Clean Architecture para organizar las responsabilidades internas y AWS Lambda para su despliegue.
+Su implementación y validación se realizarán progresivamente en los siguientes sprints, manteniendo los 12 módulos dentro de la arquitectura de Monolito Modular por Capas.

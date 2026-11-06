@@ -1,25 +1,16 @@
 # Atributos de Calidad
 
-## Sistema Integral de Gestión del Proceso de Admisión – UNSCH
+# Atributos de calidad prioritarios del Sistema de Admisión UNSCH
 
 | ID | Atributo de calidad | Escenario de calidad |
 |---|---|---|
-| AC01 | Rendimiento | El sistema debe responder a las consultas, registros, inscripciones y pagos en un tiempo objetivo de 3 segundos, bajo condiciones normales de carga y sin considerar demoras de servicios externos. |
-| AC02 | Disponibilidad | El sistema debe garantizar una disponibilidad objetivo del 99.9% durante los periodos críticos de inscripción, programación de exámenes y publicación de resultados. |
-| AC03 | Escalabilidad | El sistema debe permitir incrementar los recursos del servidor para soportar una mayor cantidad de postulantes concurrentes durante los periodos de alta demanda. |
-| AC04 | Seguridad | El sistema debe proteger los datos personales, académicos, financieros y resultados mediante autenticación segura, cifrado y control de acceso basado en roles. |
-| AC05 | Mantenibilidad | El sistema debe implementar una arquitectura de Monolito Modular por Capas con principios de Clean Architecture, permitiendo modificar módulos sin afectar innecesariamente a los demás. |
-| AC06 | Integridad | El sistema debe garantizar la consistencia de inscripciones, pagos, expedientes y resultados, evitando registros duplicados, transacciones inconsistentes y modificaciones no autorizadas. |
-| AC07 | Usabilidad | El sistema debe proporcionar interfaces intuitivas, responsivas y accesibles para facilitar la inscripción, el pago y la consulta de información desde computadoras y dispositivos móviles. |
-| AC08 | Interoperabilidad | El sistema debe integrarse de manera segura con RENIEC, la pasarela de pagos, OpenRouter API y los servicios de notificaciones mediante interfaces y protocolos estandarizados. |
-| AC09 | Confiabilidad | El sistema debe gestionar errores de conexión, fallas de servicios externos y operaciones interrumpidas sin perder información ni duplicar transacciones. |
-| AC10 | Auditabilidad | El sistema debe registrar las operaciones críticas relacionadas con inscripciones, pagos, validación documental, calificaciones y publicación de resultados, identificando al responsable y la fecha de cada operación. |
-| AC11 | Privacidad | El sistema debe proteger los datos personales de los postulantes y limitar la información enviada a OpenRouter API, cumpliendo con la normativa peruana de protección de datos personales. |
-| AC12 | Recuperabilidad | El sistema debe realizar copias de seguridad periódicas y disponer de procedimientos de recuperación ante fallas para restaurar la información y continuidad del servicio. |
-| AC13 | Accesibilidad | El sistema debe facilitar su utilización por personas con diferentes capacidades, considerando criterios de accesibilidad web como WCAG 2.2 nivel AA. |
-| AC14 | Observabilidad | El sistema debe permitir monitorear errores, tiempos de respuesta, transacciones, disponibilidad de integraciones y consumo de OpenRouter API. |
-| AC15 | Modularidad | Los 14 módulos funcionales deben mantener responsabilidades claramente definidas y comunicarse mediante interfaces internas, respetando las dependencias establecidas por Clean Architecture. |
-
+| AC01 | Rendimiento | Bajo condiciones normales de carga, al menos el 95 % de las consultas, registros, inscripciones y operaciones internas de pago debe responder en un máximo de 3 segundos, sin considerar demoras de servicios externos. |
+| AC02 | Disponibilidad | El sistema debe alcanzar una disponibilidad objetivo del 99.9 % durante los periodos críticos de inscripción, programación de exámenes y publicación de resultados. |
+| AC03 | Escalabilidad | Ante un incremento de postulantes concurrentes, el sistema debe permitir ampliar sus recursos de cómputo para mantener el rendimiento, sin modificar las reglas de negocio. Su capacidad debe verificarse mediante pruebas de carga. |
+| AC04 | Seguridad | El sistema debe proteger los datos personales, académicos, financieros y resultados mediante autenticación segura, HTTPS y control de acceso basado en roles, rechazando operaciones no autorizadas y limitando los datos enviados a servicios externos. |
+| AC05 | Mantenibilidad | Ante cambios en un módulo, el sistema debe permitir modificarlo mediante una arquitectura de Monolito Modular por Capas con principios de Clean Architecture, verificando mediante pruebas que los módulos relacionados mantienen su funcionamiento. |
+| AC06 | Integridad | Ante solicitudes repetidas, operaciones simultáneas o notificaciones duplicadas de pagos, el sistema debe mantener registros consistentes y evitar duplicidades mediante transacciones, restricciones de base de datos e idempotencia. |
+| AC09 | Confiabilidad | Ante fallas de conexión o de servicios externos, el sistema debe conservar las operaciones confirmadas, informar el estado de la solicitud y permitir reintentos sin duplicar transacciones. Los pagos con resultado incierto deben permanecer pendientes hasta verificar su estado con la pasarela. |
 ## Resumen
 
 - Total de atributos de calidad: 15

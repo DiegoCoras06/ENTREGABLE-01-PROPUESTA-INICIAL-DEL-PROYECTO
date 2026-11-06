@@ -3,201 +3,218 @@
 
 ## 7.1. Descripción general
 
-El Sistema Integral de Gestión del Proceso de Admisión UNSCH estará desarrollado bajo una arquitectura de **Monolito Modular por Capas**, aplicando los principios de **Clean Architecture**.
+El Sistema de Gestión del Proceso de Admisión UNSCH se desarrollará mediante una arquitectura de **Monolito Modular por Capas**, aplicando los principios de **Clean Architecture**.
 
-Esta arquitectura permitirá organizar las funcionalidades del sistema en módulos independientes a nivel lógico, pero integrados dentro de una única aplicación backend desarrollada con Node.js y TypeScript.
+El sistema estará organizado en **12 módulos funcionales**, integrados en una única aplicación backend desarrollada con Node.js y TypeScript. La interfaz web utilizará Angular y se comunicará con el backend mediante una API REST sobre HTTPS.
 
-El backend podrá desplegarse mediante AWS Lambda y comunicarse con la aplicación Angular a través de Amazon API Gateway.
+El backend se ejecutará mediante AWS Lambda, con Amazon API Gateway como punto de acceso a sus endpoints.
 
-El objetivo principal de este diseño es separar las responsabilidades de cada módulo, facilitar el mantenimiento del código y permitir la incorporación de nuevas funcionalidades sin afectar innecesariamente a los demás componentes.
+Este diseño corresponde a la propuesta arquitectónica inicial del Sprint 1 y establece la organización de responsabilidades, las dependencias entre capas y las integraciones tecnológicas.
 
 ## 7.2. Organización interna de los módulos
 
-Cada módulo funcional seguirá una estructura de cuatro capas, con responsabilidades claramente definidas.
+Cada módulo seguirá una estructura de cuatro capas.
 
-### Capa de presentación
+### Capa de interfaces
 
-Se encargará de recibir las solicitudes HTTP provenientes de la aplicación Angular.
+Recibirá las solicitudes HTTP mediante controladores REST y rutas.
 
-Contendrá los controladores REST y las rutas necesarias para acceder a las funcionalidades del módulo. También permitirá validar los datos de entrada y devolver las respuestas correspondientes.
+Sus responsabilidades serán validar el formato de los datos de entrada, aplicar los controles de autenticación y autorización correspondientes, invocar los casos de uso y devolver las respuestas.
+
+Esta capa no accederá directamente a la base de datos ni contendrá las reglas de negocio.
 
 ### Capa de aplicación
 
-Contendrá los casos de uso encargados de coordinar los procesos del sistema.
+Contendrá los casos de uso que coordinarán los procesos del módulo.
 
-Por ejemplo, en el módulo de Inscripción Ordinaria, esta capa ejecutará el proceso de registro, solicitará la validación de requisitos y coordinará el almacenamiento de la inscripción.
+Por ejemplo, el caso de uso Registrar Inscripción verificará la convocatoria, solicitará las validaciones correspondientes, aplicará las reglas del dominio y coordinará la persistencia mediante interfaces.
+
+También establecerá los límites transaccionales necesarios para las operaciones críticas.
 
 ### Capa de dominio
 
-Contendrá las entidades, reglas de negocio e interfaces necesarias para representar el funcionamiento del módulo.
+Contendrá las entidades, reglas de negocio y contratos internos del módulo.
 
-Esta capa será independiente de tecnologías como PostgreSQL, AWS Lambda o frameworks de desarrollo, permitiendo que las reglas de negocio puedan mantenerse sin depender de la infraestructura.
+En Inscripciones, incluirá las condiciones de registro, las diferencias entre Ordinaria y Exonerados y las transiciones válidas de estado.
+
+El dominio no dependerá de Angular, PostgreSQL, AWS Lambda ni de proveedores externos.
 
 ### Capa de infraestructura
 
-Implementará los repositorios y adaptadores necesarios para comunicarse con la base de datos y los servicios externos.
+Implementará los contratos de persistencia y los adaptadores para servicios externos.
 
-Por ejemplo, permitirá guardar inscripciones en Amazon RDS PostgreSQL y acceder a servicios como RENIEC o la pasarela de pagos cuando el proceso lo requiera.
+Permitirá almacenar información en PostgreSQL, gestionar documentos en Amazon S3, procesar eventos mediante Outbox y Amazon SQS e integrar los proveedores de identidad, pagos, inteligencia artificial y correo.
+
+Las implementaciones de infraestructura dependerán de las interfaces internas, respetando la dirección de dependencias de Clean Architecture.
 
 ## 7.3. Diagrama de diseño interno
 
-Para representar la organización interna se utiliza como ejemplo el módulo de **Inscripción Ordinaria**.
+Se utiliza como ejemplo el módulo de **Inscripciones**, que comprenderá las modalidades Ordinaria y Exonerados.
 
 ```mermaid
 flowchart TB
-    P["Presentación<br/>Controlador REST"]
-    A["Aplicación<br/>Registrar inscripción"]
-    D["Dominio<br/>Entidades y reglas de negocio"]
-    I["Infraestructura<br/>Repositorio PostgreSQL"]
+    P["Interfaces: controlador REST"]
+    A["Aplicación: registrar inscripción"]
+    D["Dominio: entidades y reglas"]
+    C["Contrato de persistencia"]
+    I["Infraestructura: adaptador PostgreSQL"]
 
-    P -->|"Ejecuta"| A
-    A -->|"Aplica reglas"| D
-    I -.->|"Implementa contratos"| D
-
-    classDef presentacion fill:#bfdbfe,stroke:#2563eb,color:#1e3a8a
-    classDef aplicacion fill:#bbf7d0,stroke:#16a34a,color:#14532d
-    classDef dominio fill:#fef3c7,stroke:#d97706,color:#78350f
-    classDef infraestructura fill:#ddd6fe,stroke:#7c3aed,color:#4c1d95
-
-    class P presentacion
-    class A aplicacion
-    class D dominio
-    class I infraestructura
+    P -->|"Invoca"| A
+    A -->|"Aplica"| D
+    A -->|"Utiliza"| C
+    I -.->|"Implementa"| C
 ```
 
-**Interpretación del diagrama:**
+Las flechas representan dependencias de código. El caso de uso utilizará un contrato interno y recibirá su implementación mediante inyección de dependencias. De esta manera, no necesitará conocer los detalles de PostgreSQL.
 
-La capa de presentación recibe las solicitudes del usuario y las envía a la capa de aplicación. Esta coordina el caso de uso y aplica las reglas definidas en el dominio.
+## 7.4. Estructura de carpetas propuesta
 
-La infraestructura implementa los contratos necesarios para almacenar y consultar información, evitando que el dominio dependa directamente de PostgreSQL.
+Los módulos se organizarán en las siguientes carpetas:
 
-## 7.4. Estructura de carpetas
+| Código | Módulo | Carpeta |
+|---|---|---|
+| M01 | Convocatorias | `modules/convocatorias/` |
+| M02 | Usuarios | `modules/usuarios/` |
+| M03 | Inscripciones | `modules/inscripciones/` |
+| M04 | Pagos | `modules/pagos/` |
+| M05 | Expedientes | `modules/expedientes/` |
+| M06 | Exámenes, Sedes y Aulas | `modules/examenes/` |
+| M07 | Resultados | `modules/resultados/` |
+| M08 | Chatbot IA | `modules/asistente/` |
+| M09 | Notificaciones | `modules/notificaciones/` |
+| M10 | Reportes | `modules/reportes/` |
+| M11 | Seguridad | `modules/seguridad/` |
+| M12 | Configuración | `modules/configuracion/` |
 
-Para mantener una organización uniforme, los módulos utilizarán la siguiente estructura de carpetas.
+Cada módulo utilizará la siguiente organización interna:
 
-```text
-src/
-├── modules/
-│   ├── convocatorias/
-│   ├── usuarios/
-│   ├── inscripcion-ordinaria/
-│   │   ├── dominio/
-│   │   │   ├── inscripcion.ts
-│   │   │   └── inscripcion-repository.ts
-│   │   ├── aplicacion/
-│   │   │   └── registrar-inscripcion.use-case.ts
-│   │   ├── infraestructura/
-│   │   │   └── postgres-inscripcion.repository.ts
-│   │   ├── presentacion/
-│   │   │   ├── inscripcion.controller.ts
-│   │   │   └── inscripcion.routes.ts
-│   │   └── inscripcion-ordinaria.module.ts
-│   ├── inscripcion-exonerados/
-│   ├── pagos/
-│   ├── expedientes/
-│   ├── examenes/
-│   ├── sedes-aulas/
-│   ├── resultados/
-│   ├── chatbot-ia/
-│   ├── notificaciones/
-│   ├── reportes/
-│   ├── seguridad/
-│   └── configuracion/
-├── shared/
-├── app.ts
-└── lambda.ts
-```
+| Ruta interna | Contenido |
+|---|---|
+| `presentation/` | Controladores REST, rutas y validación de entrada. |
+| `application/` | Casos de uso, coordinación de procesos y contratos de aplicación. |
+| `domain/` | Entidades, reglas de negocio y contratos del dominio. |
+| `infrastructure/` | Implementaciones de persistencia y adaptadores externos. |
+| `index.ts` | Interfaz pública y composición del módulo. |
 
-Cada módulo contará con sus propios componentes internos. La carpeta `shared` almacenará únicamente elementos comunes que puedan reutilizarse sin generar dependencias innecesarias entre módulos.
+Los contratos se ubicarán en la capa interna que los necesite. La carpeta `shared/` contendrá únicamente componentes técnicos comunes, evitando trasladar allí reglas que pertenezcan a un módulo específico.
 
-Esta estructura es una propuesta de organización y podrá adaptarse a las necesidades de implementación del proyecto.
+## 7.5. Funcionamiento del módulo Inscripciones
 
-## 7.5. Funcionamiento del módulo Inscripción Ordinaria
+El módulo Inscripciones gestionará las postulaciones de las modalidades **Ordinaria y Exonerados**, manteniendo sus reglas particulares dentro de un mismo módulo.
 
-El módulo de Inscripción Ordinaria permitirá registrar la postulación de un estudiante a una convocatoria de admisión.
+El proceso general será el siguiente:
 
-El proceso seguirá la siguiente secuencia:
+1. **Recepción de datos:** el postulante completará el formulario desde Angular y seleccionará la modalidad correspondiente.
 
-1. **Registro de información:** el postulante completará el formulario de inscripción desde la aplicación Angular.
+2. **Ingreso de la solicitud:** Amazon API Gateway enviará la solicitud al backend ejecutado en AWS Lambda.
 
-2. **Recepción de solicitud:** Amazon API Gateway enviará la solicitud al backend, donde será procesada por el controlador REST.
+3. **Validación de entrada:** el controlador REST verificará el formato de los datos y ejecutará el caso de uso.
 
-3. **Validación de requisitos:** el caso de uso verificará que el postulante cumpla las condiciones establecidas para la convocatoria.
+4. **Validación del proceso:** el caso de uso comprobará la convocatoria, los plazos, el programa seleccionado y los requisitos de la modalidad. La identidad deberá validarse antes de habilitar el pago.
 
-4. **Verificación de duplicados:** el sistema comprobará que no exista una inscripción previa para el mismo postulante y convocatoria.
+5. **Control de duplicidad:** se verificará que no exista una inscripción incompatible con las reglas de unicidad establecidas para el proceso.
 
-5. **Aplicación de reglas de negocio:** el dominio creará la inscripción con el estado inicial correspondiente.
+6. **Aplicación de reglas:** el dominio determinará las condiciones y el estado inicial de la inscripción.
 
-6. **Almacenamiento:** el repositorio guardará la información en Amazon RDS PostgreSQL.
+7. **Persistencia transaccional:** se guardarán la inscripción y el evento correspondiente en la bandeja Outbox de PostgreSQL dentro de una misma transacción.
 
-7. **Respuesta al usuario:** el sistema devolverá el código de inscripción y su estado actual.
+8. **Respuesta al postulante:** se devolverán el identificador de seguimiento, el estado y las acciones pendientes.
 
-Inicialmente, la inscripción tendrá el estado **PENDIENTE_PAGO**. Una vez confirmada la operación por la pasarela de pagos, el módulo correspondiente permitirá actualizar su estado según las reglas del proceso de admisión.
+9. **Continuación del proceso:** la confirmación del pago y, cuando corresponda, la aprobación documental permitirán actualizar la inscripción según las reglas de la modalidad.
+
+El módulo Pagos comunicará las confirmaciones verificadas mediante eventos internos. El módulo Inscripciones procesará estos eventos de forma idempotente para evitar actualizaciones duplicadas.
+
+La inscripción solo quedará habilitada cuando cumpla todos los requisitos de pago y validación que correspondan.
 
 ## 7.6. Módulos funcionales del sistema
 
-El sistema estará compuesto por 14 módulos funcionales, organizados dentro de una única aplicación backend.
-
 | Código | Módulo | Responsabilidad principal |
 |---|---|---|
-| M01 | Convocatorias | Gestionar periodos, cronogramas y procesos de admisión. |
-| M02 | Usuarios | Registrar usuarios y gestionar sus datos. |
-| M03 | Inscripción Ordinaria | Administrar postulaciones de la modalidad ordinaria. |
-| M04 | Inscripción Exonerados | Gestionar postulaciones de modalidades especiales. |
-| M05 | Pagos | Registrar y verificar los pagos de inscripción. |
-| M06 | Expedientes | Administrar documentos y observaciones. |
-| M07 | Exámenes | Programar las evaluaciones de admisión. |
-| M08 | Sedes y Aulas | Gestionar ambientes y asignaciones. |
-| M09 | Resultados | Procesar y publicar resultados de admisión. |
-| M10 | Chatbot IA | Orientar a los postulantes mediante OpenRouter API. |
-| M11 | Notificaciones | Enviar avisos y correos electrónicos. |
-| M12 | Reportes | Generar estadísticas e informes. |
-| M13 | Seguridad | Administrar autenticación, roles y permisos. |
-| M14 | Configuración | Gestionar parámetros generales del sistema. |
+| M01 | Convocatorias | Gestionar procesos de admisión, periodos, cronogramas y condiciones de apertura y cierre. |
+| M02 | Usuarios | Gestionar datos de postulantes, cuentas opcionales y usuarios del personal. |
+| M03 | Inscripciones | Registrar y gestionar postulaciones de las modalidades Ordinaria y Exonerados, sus estados y fichas. |
+| M04 | Pagos | Generar órdenes de pago, verificar confirmaciones y facilitar la conciliación de transacciones. |
+| M05 | Expedientes | Gestionar documentos, revisión, observaciones y subsanaciones. |
+| M06 | Exámenes, Sedes y Aulas | Programar evaluaciones, administrar ambientes y distribuir postulantes respetando capacidades y horarios. |
+| M07 | Resultados | Registrar calificaciones, calcular puntajes y gestionar la validación y publicación de resultados. |
+| M08 | Chatbot IA | Brindar orientación y seguimiento autorizado mediante OpenRouter API y derivar consultas a soporte. |
+| M09 | Notificaciones | Gestionar avisos del sistema y enviar comunicaciones por correo electrónico. |
+| M10 | Reportes | Generar estadísticas e informes operativos y administrativos. |
+| M11 | Seguridad | Gestionar autenticación, roles, permisos y registro de operaciones críticas para auditoría. |
+| M12 | Configuración | Administrar modalidades, programas, parámetros e integraciones del sistema. |
 
-Cada módulo tendrá responsabilidades específicas y se comunicará con los demás mediante interfaces definidas, evitando dependencias directas innecesarias.
+Inscripción Ordinaria e Inscripción Exonerados se integrarán en **M03 Inscripciones**.
 
-## 7.7. Integración con la infraestructura AWS
+Exámenes y Sedes y Aulas se integrarán en **M06 Exámenes, Sedes y Aulas**.
 
-El sistema utilizará diferentes servicios tecnológicos para ejecutar sus funcionalidades.
+Cada módulo expondrá una interfaz pública para colaborar con los demás sin acceder directamente a sus componentes internos.
 
-| Tecnología | Función |
+## 7.7. Tecnologías e integraciones
+
+| Tecnología o servicio | Función |
 |---|---|
-| Angular | Desarrollo de la interfaz web. |
-| Node.js y TypeScript | Implementación del backend modular. |
-| Amazon API Gateway | Recepción de solicitudes REST mediante HTTPS. |
-| AWS Lambda | Ejecución del backend. |
-| Amazon RDS PostgreSQL | Almacenamiento de información. |
-| Amazon S3 | Almacenamiento de documentos y fichas PDF. |
-| Amazon ElastiCache Redis | Almacenamiento temporal en caché. |
-| Amazon SQS | Procesamiento de tareas asíncronas. |
-| RENIEC | Validación de identidad. |
-| Pasarela de pagos | Procesamiento y confirmación de pagos. |
-| OpenRouter API | Integración del chatbot de inteligencia artificial. |
+| Angular | Interfaz web responsiva para postulantes y personal. |
+| Node.js y TypeScript | Desarrollo de la aplicación backend modular. |
+| Amazon API Gateway | Exposición de endpoints REST mediante HTTPS. |
+| AWS Lambda | Ejecución del backend modular. |
+| Amazon RDS PostgreSQL | Persistencia de datos, restricciones y transacciones. |
+| Amazon S3 para frontend | Almacenamiento de los archivos estáticos de Angular. |
+| Amazon CloudFront | Distribución del frontend y caché HTTP de consultas públicas autorizadas. |
+| Amazon S3 privado | Almacenamiento protegido de expedientes y documentos PDF. |
+| Outbox en PostgreSQL | Registro transaccional de eventos pendientes de procesamiento. |
+| Amazon SQS | Transporte de mensajes para tareas asíncronas. |
+| RENIEC vía apiperu | Consulta de identidad, sujeta a las condiciones y autorizaciones del proveedor. |
+| Izipay micuentaweb | Procesamiento de pagos con tarjeta. |
+| Culqi | Procesamiento de pagos con Yape. |
+| OpenRouter API | Procesamiento de consultas del chatbot. |
 | Amazon SES | Envío de correos electrónicos. |
 
-La comunicación con estos servicios se realizará mediante adaptadores implementados en la capa de infraestructura.
+Los archivos del frontend y los documentos privados tendrán permisos y mecanismos de acceso diferenciados.
 
-Los servicios de caché y mensajería podrán incorporarse progresivamente de acuerdo con las necesidades del sistema.
+Las consultas con información personal no se almacenarán en una caché pública.
 
-## 7.8. Reglas de diseño
+## 7.8. Comunicación entre módulos
 
-Para mantener una estructura organizada se establecerán las siguientes reglas:
+La colaboración entre módulos utilizará dos mecanismos:
 
-1. Cada módulo tendrá responsabilidades claramente definidas.
-2. La lógica de negocio permanecerá separada de la infraestructura.
-3. Los controladores REST no accederán directamente a la base de datos.
-4. Los casos de uso coordinarán los procesos del sistema.
-5. Los repositorios implementarán las interfaces definidas en las capas internas.
-6. Los módulos evitarán dependencias circulares.
-7. Todas las funcionalidades se integrarán en un único backend desplegable.
+| Mecanismo | Aplicación |
+|---|---|
+| Interfaces internas | Operaciones que requieran una respuesta inmediata de otro módulo. |
+| Eventos internos | Comunicación de hechos de negocio y ejecución de tareas complementarias. |
 
-Estas reglas permitirán aplicar los principios de Clean Architecture dentro del Monolito Modular por Capas.
+Por ejemplo, Inscripciones podrá consultar las condiciones de una convocatoria mediante una interfaz pública. Cuando se confirme un pago, Pagos emitirá un evento para que los módulos interesados actualicen sus procesos.
 
-## 7.9. Conclusión
+La bandeja Outbox permitirá guardar el evento junto con la operación de negocio en PostgreSQL. Posteriormente, el mecanismo de despacho enviará los mensajes a Amazon SQS para su procesamiento.
 
-El diseño interno de módulos permitirá desarrollar el Sistema Integral de Gestión del Proceso de Admisión UNSCH de manera organizada, modular y mantenible.
+Los consumidores deberán admitir entregas repetidas mediante idempotencia y reintentos controlados. El uso de mensajería no implicará dividir los módulos en microservicios.
 
-La aplicación de Clean Architecture facilitará la separación entre las reglas de negocio y los detalles tecnológicos, mientras que el Monolito Modular por Capas permitirá integrar las funcionalidades dentro de una sola aplicación backend.
+## 7.9. Reglas de diseño
 
-Esta propuesta simplificará el desarrollo, las pruebas y el despliegue del sistema, además de facilitar futuras mejoras y ampliaciones.
+1. Cada módulo tendrá responsabilidades y contratos públicos definidos.
+2. Las dependencias de código se orientarán hacia las capas internas.
+3. El dominio permanecerá independiente de tecnologías y proveedores externos.
+4. Los controladores REST no accederán directamente a la base de datos.
+5. Los casos de uso utilizarán interfaces para solicitar persistencia e integraciones.
+6. La infraestructura implementará los contratos definidos en las capas internas.
+7. Los módulos no accederán directamente a las tablas ni a los componentes privados de otros módulos.
+8. Se evitarán dependencias circulares.
+9. Las operaciones críticas utilizarán transacciones, restricciones e idempotencia.
+10. Las credenciales de las integraciones permanecerán en el backend.
+11. El chatbot accederá únicamente a información autorizada y enviará al proveedor los datos necesarios.
+12. Los 12 módulos formarán parte de una misma aplicación backend modular.
+
+## 7.10. Relación con los atributos de calidad
+
+| Atributo | Decisiones de diseño relacionadas |
+|---|---|
+| Rendimiento | Consultas optimizadas, índices, caché HTTP pública y tareas asíncronas. |
+| Disponibilidad | Servicios administrados y manejo controlado de fallas. |
+| Escalabilidad | Ejecución en AWS Lambda y control de concurrencia y conexiones a PostgreSQL. |
+| Seguridad | Autenticación, autorización por roles, HTTPS y protección de credenciales. |
+| Mantenibilidad | Separación por capas, contratos internos y límites entre módulos. |
+| Integridad | Transacciones, restricciones de unicidad y validaciones de negocio. |
+| Usabilidad | Interfaz responsiva, formularios comprensibles y mensajes de validación. |
+| Interoperabilidad | Adaptadores para identidad, pagos, chatbot y correo. |
+| Confiabilidad | Outbox, reintentos controlados, verificación de pagos e idempotencia. |
+
+Este diseño establece la estructura inicial del sistema para el Sprint 1. Su cumplimiento se verificará durante los siguientes sprints mediante revisiones de código y pruebas.

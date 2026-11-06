@@ -1,580 +1,352 @@
 # Nivel 4 · Diagrama de Código
 
-> **Proyecto:** Sistema Integral de Gestión del Proceso de Admisión – UNSCH  
-> **Módulos detallados:** Inscripción Ordinaria y Pagos  
-> **Modelo:** C4 · Nivel 4 de 4 · **Notación:** UML · **Versión:** 1.0
-
----
+**Proyecto:** Sistema de Gestión del Proceso de Admisión – UNSCH  
+**Módulos detallados:** M03 Inscripciones y M04 Pagos  
+**Modelo:** C4 · Nivel 4  
+**Notación:** UML  
+**Entrega:** Sprint 1 · Diseño inicial
 
 ## 1. Objetivo
 
-Mostrar cómo está organizado el código de los componentes del **Sistema Integral de Gestión del Proceso de Admisión – UNSCH**, identificando sus clases, interfaces, responsabilidades y relaciones.
+Definir las clases, interfaces y relaciones propuestas para registrar una inscripción y confirmar su pago.
 
-Se detalla el flujo **Registrar inscripción ordinaria y confirmar pago**, que involucra los módulos **Inscripción Ordinaria (M03)** y **Pagos (M05)**, así como la validación del postulante y la integración con la pasarela de pagos.
+El diseño comprenderá las modalidades Ordinaria y Exonerados dentro de M03 Inscripciones. M04 Pagos gestionará las operaciones con tarjeta mediante Izipay micuentaweb y con Yape mediante Culqi.
 
-Este nivel permite comprender cómo se implementarán las reglas de negocio mediante **Clean Architecture**, manteniendo la independencia entre el dominio y las tecnologías externas.
+Los nombres de clases y métodos representan una propuesta de diseño que se detallará durante la implementación.
 
-| **Aspecto** | **Descripción** |
-|---|---|
-| Pregunta que responde | ¿Qué clases existen dentro de los módulos y cómo se relacionan para registrar una inscripción y confirmar su pago? |
-| Audiencia | Desarrolladores y arquitectos de software. |
-| Notación | UML: diagrama de clases y diagrama de secuencia. |
-| Arquitectura | Monolito Modular por Capas. |
-| Enfoque interno | Clean Architecture. |
-| Backend | Node.js + TypeScript + Express. |
-| Despliegue | AWS Lambda. |
-| Módulos detallados | M03 – Inscripción Ordinaria y M05 – Pagos. |
-| Por qué estos módulos | Concentran reglas importantes del proceso de admisión y requieren persistencia, validación e integración con servicios externos. |
-| Nivel anterior | `Nivel3-Diagrama-de-Componentes.md` |
+## 2. Distribución por capas
 
----
+| Capa | Elementos propuestos | Responsabilidad |
+|---|---|---|
+| Interfaces | Controladores de Inscripciones y Pagos. | Recibir solicitudes, validar su formato y devolver respuestas HTTP. |
+| Aplicación | Casos de uso de registro, inicio de pago y confirmación. | Coordinar validaciones, operaciones transaccionales e integraciones. |
+| Dominio | Entidades Inscripción y Pago, reglas por modalidad y contratos. | Mantener las reglas y transiciones válidas del negocio. |
+| Infraestructura | Repositorios PostgreSQL, adaptadores de pasarela y Outbox. | Implementar persistencia, comunicación externa y registro de eventos. |
+| Composición | Configuración de módulos e inyección de dependencias. | Conectar los casos de uso con sus implementaciones concretas. |
 
-## 2. Diagrama de Clases
-
-### Diagrama de clases de los módulos Inscripción Ordinaria y Pagos
+## 3. Diagrama de clases de Inscripciones
 
 ```mermaid
 classDiagram
     direction TB
 
-    namespace Presentacion {
-        class InscripcionController {
-            -registrarInscripcionUseCase
-            +registrar(req, res)
-            +consultar(req, res)
-        }
-
-        class PagoController {
-            -procesarPagoUseCase
-            +crearPago(req, res)
-            +recibirConfirmacion(req, res)
-        }
+    class InscripcionesController {
+        +registrar(datos)
+        +consultarEstado(consulta)
     }
 
-    namespace Aplicacion {
-        class RegistrarInscripcionUseCase {
-            -inscripcionRepository
-            -elegibilidadPort
-            +ejecutar(command) Inscripcion
-        }
-
-        class ProcesarPagoUseCase {
-            -paymentPort
-            -pagoRepository
-            +ejecutar(command) ResultadoPago
-        }
-
-        class ConfirmarPagoInscripcionUseCase {
-            -inscripcionRepository
-            -pagoRepository
-            +ejecutar(pagoId) void
-        }
+    class RegistrarInscripcionUseCase {
+        +execute(datos) ResumenInscripcion
     }
 
-    namespace Dominio {
-        class Inscripcion {
-            -id: string
-            -postulanteId: string
-            -convocatoriaId: string
-            -programaId: string
-            -estado: EstadoInscripcion
-            +crear(datos) Inscripcion
-            +confirmarPago() void
-            +obtenerEstado() EstadoInscripcion
-        }
-
-        class EstadoInscripcion {
-            <<enumeration>>
-            PENDIENTE_PAGO
-            PAGO_CONFIRMADO
-            EN_REVISION
-            APROBADA
-            OBSERVADA
-            ANULADA
-        }
-
-        class Pago {
-            -id: string
-            -inscripcionId: string
-            -monto: number
-            -estado: EstadoPago
-            -referenciaExterna: string
-            +registrarConfirmacion() void
-            +registrarRechazo() void
-            +obtenerEstado() EstadoPago
-        }
-
-        class EstadoPago {
-            <<enumeration>>
-            PENDIENTE
-            APROBADO
-            RECHAZADO
-            ANULADO
-        }
-
-        class InscripcionRepository {
-            <<interface>>
-            +guardar(inscripcion) Promise
-            +buscarPorId(id) Promise
-            +existe(postulanteId, convocatoriaId) Promise
-        }
-
-        class ElegibilidadPort {
-            <<interface>>
-            +verificar(postulanteId, convocatoriaId) Promise
-        }
-
-        class PagoRepository {
-            <<interface>>
-            +guardar(pago) Promise
-            +buscarPorId(id) Promise
-            +buscarPorReferencia(referencia) Promise
-        }
-
-        class PaymentPort {
-            <<interface>>
-            +crearOrdenPago(datos) Promise
-            +consultarPago(referencia) Promise
-            +verificarNotificacion(datos) Promise
-        }
-
-        class ResultadoPago {
-            +pagoId: string
-            +estado: string
-            +referencia: string
-            +mensaje: string
-        }
+    class Inscripcion {
+        +id: string
+        +modalidad: Modalidad
+        +estado: EstadoInscripcion
+        +registrarPagoConfirmado(pagoId)
+        +registrarEvaluacionDocumental(resultado)
+        +evaluarHabilitacion()
     }
 
-    namespace Infraestructura {
-        class PostgresInscripcionRepository {
-            -db
-            +guardar(inscripcion) Promise
-            +buscarPorId(id) Promise
-            +existe(postulanteId, convocatoriaId) Promise
-        }
-
-        class PostgresPagoRepository {
-            -db
-            +guardar(pago) Promise
-            +buscarPorId(id) Promise
-            +buscarPorReferencia(referencia) Promise
-        }
-
-        class PaymentGatewayAdapter {
-            -httpClient
-            -apiKey
-            +crearOrdenPago(datos) Promise
-            +consultarPago(referencia) Promise
-            +verificarNotificacion(datos) Promise
-        }
-
-        class ElegibilidadAdapter {
-            -usuariosFacade
-            -convocatoriasFacade
-            +verificar(postulanteId, convocatoriaId) Promise
-        }
+    class InscripcionesRepository {
+        <<interface>>
+        +buscarPorPostulanteYConvocatoria(postulanteId, convocatoriaId)
+        +guardar(inscripcion, transaccion)
     }
 
-    InscripcionController --> RegistrarInscripcionUseCase
-    PagoController --> ProcesarPagoUseCase
-    PagoController --> ConfirmarPagoInscripcionUseCase
+    class ConvocatoriasConsulta {
+        <<interface>>
+        +obtenerCondiciones(convocatoriaId)
+    }
 
-    RegistrarInscripcionUseCase --> InscripcionRepository
-    RegistrarInscripcionUseCase --> ElegibilidadPort
-    RegistrarInscripcionUseCase ..> Inscripcion : crea
+    class PostulantesConsulta {
+        <<interface>>
+        +obtenerDatosValidados(postulanteId)
+    }
 
-    ProcesarPagoUseCase --> PaymentPort
-    ProcesarPagoUseCase --> PagoRepository
-    ProcesarPagoUseCase ..> Pago : crea
+    class PostgresInscripcionesRepository {
+        +buscarPorPostulanteYConvocatoria(postulanteId, convocatoriaId)
+        +guardar(inscripcion, transaccion)
+    }
 
-    ConfirmarPagoInscripcionUseCase --> InscripcionRepository
-    ConfirmarPagoInscripcionUseCase --> PagoRepository
+    InscripcionesController --> RegistrarInscripcionUseCase
+    RegistrarInscripcionUseCase --> Inscripcion
+    RegistrarInscripcionUseCase --> InscripcionesRepository
+    RegistrarInscripcionUseCase --> ConvocatoriasConsulta
+    RegistrarInscripcionUseCase --> PostulantesConsulta
 
-    Inscripcion --> EstadoInscripcion
-    Pago --> EstadoPago
-    Pago --> ResultadoPago : produce
-
-    PostgresInscripcionRepository ..|> InscripcionRepository
-    PostgresPagoRepository ..|> PagoRepository
-    PaymentGatewayAdapter ..|> PaymentPort
-    ElegibilidadAdapter ..|> ElegibilidadPort
+    PostgresInscripcionesRepository ..|> InscripcionesRepository
 ```
 
-**Descripción:** El diagrama representa las clases principales de los módulos Inscripción Ordinaria y Pagos, organizadas mediante Clean Architecture.
+El caso de uso consultará las condiciones de la convocatoria y los datos validados del postulante mediante contratos públicos.
 
-Los controladores reciben las solicitudes HTTP, los casos de uso coordinan los procesos, las entidades aplican las reglas de negocio y los repositorios y adaptadores permiten la comunicación con PostgreSQL y la pasarela de pagos.
+La entidad Inscripción aplicará las reglas correspondientes a la modalidad. Su habilitación requerirá cumplir las condiciones de pago y validación documental que correspondan.
 
----
+## 4. Diagrama de clases de Pagos
 
-## 2.1. Capas de Clean Architecture
+```mermaid
+classDiagram
+    direction TB
 
-| **Capa** | **Contiene** | **Regla** |
-|---|---|---|
-| **Presentación** | Controladores y rutas REST. | Traducir solicitudes HTTP en llamadas a los casos de uso y devolver respuestas al cliente. |
-| **Aplicación** | Casos de uso y comandos. | Coordinar los procesos sin depender directamente de PostgreSQL ni de servicios externos. |
-| **Dominio** | Entidades, enumeraciones, reglas de negocio e interfaces. | Contener las reglas fundamentales del sistema sin depender de las demás capas. |
-| **Infraestructura** | Repositorios y adaptadores. | Implementar las interfaces mediante tecnologías concretas. |
+    class PagosController {
+        +iniciarPago(datos)
+        +recibirConfirmacion(mensaje)
+        +consultarEstado(consulta)
+    }
 
-**Regla de dependencia:** las dependencias del código deben apuntar hacia las capas internas. Los repositorios y adaptadores implementan interfaces del dominio; las entidades no conocen PostgreSQL, AWS Lambda ni la pasarela de pagos.
+    class IniciarPagoUseCase {
+        +execute(datos) InicioPago
+    }
 
----
+    class ConfirmarPagoUseCase {
+        +execute(mensaje) ResultadoConfirmacion
+    }
 
-## 2.2. Clases del módulo Inscripción Ordinaria
+    class Pago {
+        +id: string
+        +inscripcionId: string
+        +importe: decimal
+        +moneda: string
+        +estado: EstadoPago
+        +confirmar(resultadoVerificado)
+    }
 
-| **Clase** | **Tipo** | **Capa** | **Responsabilidad** |
-|---|---|---|---|
-| `InscripcionController` | Controlador | Presentación | Recibe solicitudes de registro y consulta de inscripciones mediante la API REST. |
-| `RegistrarInscripcionUseCase` | Caso de uso | Aplicación | Verifica la elegibilidad, comprueba duplicidades y registra una inscripción. |
-| `Inscripcion` | Entidad | Dominio | Representa la inscripción del postulante y controla sus reglas y estados. |
-| `EstadoInscripcion` | Enumeración | Dominio | Define los estados permitidos de una inscripción. |
-| `InscripcionRepository` | Interfaz | Dominio | Establece el contrato para guardar y consultar inscripciones. |
-| `ElegibilidadPort` | Interfaz | Dominio | Define el contrato para verificar si un postulante puede inscribirse. |
-| `PostgresInscripcionRepository` | Repositorio | Infraestructura | Implementa la persistencia de inscripciones en PostgreSQL. |
-| `ElegibilidadAdapter` | Adaptador | Infraestructura | Consulta los módulos Usuarios y Convocatorias para comprobar la elegibilidad. |
+    class PagosRepository {
+        <<interface>>
+        +buscarPorOperacion(proveedor, operacionId, transaccion)
+        +guardar(pago, transaccion)
+    }
 
-### Responsabilidades principales
+    class ContextoPagoConsulta {
+        <<interface>>
+        +obtenerContexto(inscripcionId)
+    }
 
-**InscripcionController**
+    class PaymentGateway {
+        <<interface>>
+        +createCheckout(solicitud)
+        +verify(mensaje)
+        +query(referencia)
+    }
 
-- Recibir solicitudes HTTP.
-- Validar los datos de entrada.
-- Invocar los casos de uso.
-- Devolver respuestas JSON.
+    class YapeGateway {
+        <<interface>>
+        +charge(solicitud)
+        +query(referencia)
+    }
 
-**RegistrarInscripcionUseCase**
+    class MiCuentaWebGateway
+    class CulqiYapeGateway
+    class PostgresPagosRepository
 
-- Verificar la elegibilidad del postulante.
-- Comprobar que no exista una inscripción duplicada.
-- Crear la inscripción.
-- Guardar la inscripción con estado `PENDIENTE_PAGO`.
+    PagosController --> IniciarPagoUseCase
+    PagosController --> ConfirmarPagoUseCase
 
-**Inscripcion**
+    IniciarPagoUseCase --> ContextoPagoConsulta
+    IniciarPagoUseCase --> PagosRepository
+    IniciarPagoUseCase --> PaymentGateway
+    IniciarPagoUseCase --> YapeGateway
 
-- Representar la información de la postulación.
-- Mantener los estados permitidos.
-- Aplicar las reglas de transición de estado.
-- Confirmar el pago cuando exista una validación autorizada.
+    ConfirmarPagoUseCase --> Pago
+    ConfirmarPagoUseCase --> PagosRepository
+    ConfirmarPagoUseCase --> PaymentGateway
+    ConfirmarPagoUseCase --> YapeGateway
 
-**PostgresInscripcionRepository**
+    MiCuentaWebGateway ..|> PaymentGateway
+    CulqiYapeGateway ..|> YapeGateway
+    PostgresPagosRepository ..|> PagosRepository
+```
 
-- Guardar inscripciones.
-- Consultar inscripciones por identificador.
-- Verificar duplicidades.
-- Ejecutar operaciones SQL mediante PostgreSQL.
+Los contratos de tarjeta y Yape serán específicos para sus capacidades. No se exigirá que ambas pasarelas implementen operaciones que su proveedor no admita.
 
----
+El importe y la moneda se obtendrán de información validada por el backend. Los datos recibidos desde Angular no determinarán por sí solos el valor que se deba cobrar.
 
-## 2.3. Clases del módulo Pagos
+## 5. Transacciones y eventos
 
-| **Clase** | **Tipo** | **Capa** | **Responsabilidad** |
-|---|---|---|---|
-| `PagoController` | Controlador | Presentación | Recibe solicitudes para generar pagos y notificaciones de la pasarela. |
-| `ProcesarPagoUseCase` | Caso de uso | Aplicación | Coordina la generación de una orden de pago. |
-| `ConfirmarPagoInscripcionUseCase` | Caso de uso de integración | Aplicación | Coordina la confirmación del pago y la actualización autorizada de la inscripción. |
-| `Pago` | Entidad | Dominio | Representa un pago asociado a una inscripción. |
-| `EstadoPago` | Enumeración | Dominio | Define los estados del pago. |
-| `PaymentPort` | Interfaz | Dominio | Establece las operaciones requeridas de la pasarela de pagos. |
-| `PagoRepository` | Interfaz | Dominio | Define las operaciones de persistencia de pagos. |
-| `ResultadoPago` | DTO | Dominio / Contrato | Representa el resultado de una operación de pago. |
-| `PaymentGatewayAdapter` | Adaptador | Infraestructura | Implementa la integración con la pasarela de pagos mediante HTTPS. |
-| `PostgresPagoRepository` | Repositorio | Infraestructura | Almacena y consulta información de pagos en PostgreSQL. |
+```mermaid
+classDiagram
+    direction TB
 
-### Responsabilidades principales
+    class UnidadTrabajo {
+        <<interface>>
+        +ejecutar(operacion)
+    }
 
-**ProcesarPagoUseCase**
+    class EventOutbox {
+        <<interface>>
+        +guardar(evento, transaccion)
+    }
 
-- Recibir una solicitud de pago.
-- Verificar los datos necesarios.
-- Solicitar la creación de una orden mediante `PaymentPort`.
-- Registrar la referencia del pago.
-- Devolver la información necesaria para continuar con el proveedor.
+    class ConfirmarPagoUseCase {
+        +execute(mensaje)
+    }
 
-**Pago**
+    class PagoConfirmadoHandler {
+        +handle(evento)
+    }
 
-- Representar una operación de pago.
-- Mantener el monto y la referencia.
-- Controlar los estados del pago.
-- Evitar transiciones inválidas.
+    class InscripcionesRepository {
+        <<interface>>
+        +buscarPorId(id, transaccion)
+        +guardar(inscripcion, transaccion)
+    }
 
-**PaymentGatewayAdapter**
+    class RegistroEventosProcesados {
+        <<interface>>
+        +registrarSiNuevo(eventoId, consumidor, transaccion)
+    }
 
-- Construir solicitudes compatibles con la pasarela.
-- Enviar operaciones mediante HTTPS.
-- Consultar el estado de un pago.
-- Verificar la autenticidad de las notificaciones del proveedor.
-- Transformar las respuestas externas en resultados del dominio.
+    class PostgresUnidadTrabajo
+    class PostgresEventOutbox
 
-**PostgresPagoRepository**
+    ConfirmarPagoUseCase --> UnidadTrabajo
+    ConfirmarPagoUseCase --> EventOutbox
 
-- Guardar operaciones de pago.
-- Consultar pagos por identificador.
-- Consultar referencias externas.
-- Facilitar el control de duplicidades.
+    PagoConfirmadoHandler --> UnidadTrabajo
+    PagoConfirmadoHandler --> InscripcionesRepository
+    PagoConfirmadoHandler --> RegistroEventosProcesados
 
----
+    PostgresUnidadTrabajo ..|> UnidadTrabajo
+    PostgresEventOutbox ..|> EventOutbox
+```
 
-## 2.4. Notación UML utilizada
+La implementación de Unidad de Trabajo proporcionará un contexto transaccional compartido por los repositorios y Outbox.
 
-| **Símbolo** | **Significado** | **Ejemplo** |
-|---|---|---|
-| Línea continua con flecha | Asociación o referencia entre clases. | `InscripcionController → RegistrarInscripcionUseCase` |
-| Línea discontinua con flecha | Dependencia o utilización temporal. | `RegistrarInscripcionUseCase → Inscripcion` |
-| Línea discontinua con triángulo hueco | Realización de una interfaz. | `PostgresInscripcionRepository ▷ InscripcionRepository` |
-| Rombo relleno | Composición entre objetos. | Una entidad puede contener objetos de valor propios. |
-| `<<interface>>` | Interfaz o contrato. | `PaymentPort` |
-| `<<enumeration>>` | Enumeración. | `EstadoInscripcion` |
-| `-` | Atributo o método privado. | `-estado` |
-| `+` | Atributo o método público. | `+confirmarPago()` |
+La confirmación del pago y el registro de `PagoConfirmado` se guardarán en una misma transacción.
 
----
+Posteriormente, el consumidor de Inscripciones actualizará su información en otra transacción. El registro del evento procesado y la modificación de la inscripción deberán ser atómicos para evitar aplicar el mismo evento más de una vez.
 
-## 3. Diagrama de Secuencia: Registrar Inscripción y Confirmar Pago
+## 6. Responsabilidades principales
 
-El flujo comienza cuando el postulante registra una inscripción ordinaria. El sistema valida su elegibilidad y guarda la inscripción en estado pendiente de pago.
+| Elemento | Responsabilidad |
+|---|---|
+| `RegistrarInscripcionUseCase` | Verificar condiciones, prevenir duplicidades y coordinar el registro. |
+| `Inscripcion` | Aplicar reglas por modalidad y controlar la habilitación. |
+| `IniciarPagoUseCase` | Consultar el contexto autorizado y solicitar la operación al proveedor. |
+| `ConfirmarPagoUseCase` | Verificar el resultado externo, comprobar los datos y registrar la confirmación idempotente. |
+| `Pago` | Proteger las transiciones y condiciones de la transacción. |
+| `InscripcionesRepository` | Definir las operaciones de persistencia de inscripciones. |
+| `PagosRepository` | Definir las operaciones de persistencia de pagos. |
+| `UnidadTrabajo` | Ejecutar operaciones que requieran una transacción común. |
+| `EventOutbox` | Registrar eventos dentro de la transacción de negocio. |
+| `PagoConfirmadoHandler` | Aplicar el pago confirmado a la inscripción y revisar sus requisitos. |
+| Adaptadores de pasarela | Traducir solicitudes, verificar respuestas y consultar al proveedor. |
 
-Posteriormente, el postulante solicita una orden de pago. La confirmación definitiva se realiza únicamente después de verificar la operación con la pasarela de pagos.
-
-### Diagrama de secuencia
+## 7. Secuencia de registro de inscripción
 
 ```mermaid
 sequenceDiagram
-    autonumber
-
     actor P as Postulante
-    participant WEB as Aplicación Web
-    participant API as API Gateway
-    participant IC as InscripcionController
-    participant RI as RegistrarInscripcionUseCase
-    participant EP as ElegibilidadPort
-    participant IR as InscripcionRepository
-    participant DB as PostgreSQL
-    participant PC as PagoController
-    participant PP as ProcesarPagoUseCase
-    participant PG as PaymentPort
-    participant EXT as Pasarela de Pagos
-    participant CP as ConfirmarPagoInscripcionUseCase
+    participant W as Angular
+    participant C as Controlador
+    participant U as Registrar inscripción
+    participant T as Persistencia transaccional
 
-    P->>WEB: Completa formulario de inscripción
-    WEB->>API: POST /api/v1/inscripciones/ordinarias
-    API->>IC: Invocar controlador
-    IC->>RI: ejecutar(datos)
-
-    RI->>EP: verificar(postulanteId, convocatoriaId)
-    EP-->>RI: Resultado de elegibilidad
-
-    alt Postulante no elegible
-        RI-->>IC: Error de elegibilidad
-        IC-->>WEB: 422 Unprocessable Content
-        WEB-->>P: Mostrar observación
-    else Postulante elegible
-        RI->>IR: existe(postulanteId, convocatoriaId)
-        IR->>DB: Consultar inscripción existente
-        DB-->>IR: Resultado
-        IR-->>RI: Existe / No existe
-
-        alt Inscripción duplicada
-            RI-->>IC: Error de duplicidad
-            IC-->>WEB: 409 Conflict
-            WEB-->>P: Mostrar inscripción existente
-        else Inscripción válida
-            Note over RI: Crear inscripción PENDIENTE_PAGO
-            RI->>IR: guardar(inscripcion)
-            IR->>DB: INSERT inscripción
-            DB-->>IR: Confirmación
-            IR-->>RI: Inscripción registrada
-            RI-->>IC: Datos de inscripción
-            IC-->>WEB: 201 Created
-            WEB-->>P: Inscripción pendiente de pago
-        end
-    end
-
-    opt Inscripción creada correctamente
-        P->>WEB: Solicita realizar pago
-        WEB->>API: POST /api/v1/pagos
-        API->>PC: crearPago(datos)
-        PC->>PP: ejecutar(datos)
-        PP->>PG: crearOrdenPago(datos)
-        PG->>EXT: Solicitar orden mediante HTTPS
-        EXT-->>PG: Referencia y datos de pago
-        PG-->>PP: ResultadoPago
-        Note over PP: Registrar pago PENDIENTE en PostgreSQL
-        PP-->>PC: Orden de pago registrada
-        PC-->>WEB: 201 Created
-        WEB-->>P: Mostrar instrucciones o enlace de pago
-
-        P->>EXT: Completa operación de pago
-
-        EXT->>API: Notificación de resultado
-        API->>PC: recibirConfirmacion(notificacion)
-        PC->>PG: verificarNotificacion(datos)
-        PG-->>PC: Notificación válida / inválida
-
-        alt Notificación inválida
-            PC-->>EXT: Rechazar notificación
-        else Notificación válida
-            PC->>PG: consultarPago(referencia)
-            PG->>EXT: Consultar estado real
-            EXT-->>PG: Estado del pago
-            PG-->>PC: Estado verificado
-
-            alt Pago aprobado
-                PC->>CP: ejecutar(pagoId)
-                Note over CP: Confirmación idempotente y transaccional
-                CP->>DB: Actualizar pago e inscripción
-                DB-->>CP: Confirmación
-                CP-->>PC: Pago confirmado
-                PC-->>EXT: 200 OK
-            else Pago rechazado o pendiente
-                Note over PC: Registrar estado verificado del pago
-                PC-->>EXT: 200 OK
-            end
-        end
-
-        P->>WEB: Consulta estado de inscripción
-        WEB->>API: GET /api/v1/inscripciones/{id}
-        API->>IC: consultar(id)
-        IC->>IR: buscarPorId(id)
-        IR->>DB: SELECT inscripción
-        DB-->>IR: Datos actualizados
-        IR-->>IC: Inscripción
-        IC-->>WEB: 200 OK
-        WEB-->>P: Mostrar estado actualizado
-    end
+    P->>W: Completa datos y modalidad
+    W->>C: Envía solicitud
+    C->>U: Ejecuta con datos validados
+    Note over U: Consulta convocatoria y datos de identidad validados
+    U->>U: Aplica reglas de modalidad y duplicidad
+    U->>T: Guarda inscripción y evento Outbox
+    T-->>U: Confirma transacción
+    U-->>C: Identificador, estado y acciones pendientes
+    C-->>W: Respuesta del registro
+    W-->>P: Muestra seguimiento
 ```
 
-**Nota:** El retorno del postulante desde la pasarela no constituye por sí solo una confirmación de pago. El backend debe verificar la notificación y el estado de la operación antes de actualizar la inscripción.
+El identificador inicial permitirá consultar el proceso. La emisión de la ficha definitiva y la habilitación dependerán de las reglas de inscripción, pago y evaluación documental.
 
----
+Las restricciones de PostgreSQL complementarán la comprobación de duplicidad para proteger las operaciones concurrentes.
 
-## 3.1. Descripción del flujo
+## 8. Secuencia de confirmación de pago
 
-| **Paso** | **Origen → Destino** | **Acción** |
-|---|---|---|
-| 1 | Postulante → Aplicación Web | Completa el formulario de inscripción ordinaria. |
-| 2 | Aplicación Web → API Gateway | Envía `POST /api/v1/inscripciones/ordinarias`. |
-| 3 | API Gateway → InscripcionController | Dirige la solicitud al controlador. |
-| 4 | InscripcionController → RegistrarInscripcionUseCase | Ejecuta el caso de uso de inscripción. |
-| 5 | RegistrarInscripcionUseCase → ElegibilidadPort | Verifica que el postulante cumpla las condiciones de inscripción. |
-| 6 | RegistrarInscripcionUseCase → InscripcionRepository | Comprueba que no exista una inscripción duplicada. |
-| 7 | RegistrarInscripcionUseCase → Inscripcion | Crea una inscripción con estado `PENDIENTE_PAGO`. |
-| 8 | InscripcionRepository → PostgreSQL | Guarda la inscripción. |
-| 9 | InscripcionController → Aplicación Web | Responde `201 Created` con los datos de inscripción. |
-| 10 | Aplicación Web → PagoController | Solicita la generación de una orden de pago. |
-| 11 | PagoController → ProcesarPagoUseCase | Ejecuta el caso de uso del módulo Pagos. |
-| 12 | ProcesarPagoUseCase → PaymentPort | Solicita una orden de pago. |
-| 13 | PaymentGatewayAdapter → Pasarela de Pagos | Envía la solicitud mediante HTTPS. |
-| 14 | Pasarela de Pagos → PaymentGatewayAdapter | Devuelve la referencia y los datos de pago. |
-| 15 | ProcesarPagoUseCase → PagoRepository | Registra el pago en estado `PENDIENTE`. |
-| 16 | Aplicación Web → Postulante | Presenta las instrucciones o el enlace de pago. |
-| 17 | Pasarela de Pagos → PagoController | Envía una notificación sobre el resultado del pago. |
-| 18 | PagoController → PaymentPort | Verifica la autenticidad de la notificación y consulta el estado del pago. |
-| 19 | PagoController → ConfirmarPagoInscripcionUseCase | Solicita la confirmación cuando el pago está aprobado. |
-| 20 | ConfirmarPagoInscripcionUseCase → PostgreSQL | Actualiza el pago y la inscripción de manera transaccional e idempotente. |
-| 21 | Postulante → Aplicación Web | Consulta el estado actualizado de su inscripción. |
+```mermaid
+sequenceDiagram
+    participant O as Origen de confirmación
+    participant C as Controlador de pagos
+    participant U as Confirmar pago
+    participant G as Adaptador de pasarela
+    participant T as Persistencia transaccional
 
----
+    O->>C: Comunica resultado o solicita verificación
+    C->>U: Entrega mensaje y contexto
+    U->>G: Verifica autenticidad o consulta operación
+    G-->>U: Resultado normalizado
+    U->>U: Comprueba pedido, importe, moneda y estado
 
-## 3.2. Flujos alternativos
+    alt Pago aprobado y válido
+        U->>T: Confirma pago y guarda evento Outbox
+        Note over T: Restricciones y control idempotente
+        T-->>U: Resultado confirmado o ya procesado
+        U-->>C: Estado confirmado
+    else Resultado rechazado o inconsistente
+        U-->>C: Error controlado o rechazo
+    else Resultado incierto
+        U-->>C: Pendiente de verificación
+    end
 
-| **Situación** | **Comportamiento del sistema** | **Resultado** |
-|---|---|---|
-| Postulante no elegible | El sistema rechaza el registro y muestra la razón. | `422 Unprocessable Content` |
-| Inscripción duplicada | El sistema impide registrar otra inscripción equivalente. | `409 Conflict` |
-| Error de conexión con PostgreSQL | El sistema registra el error y evita informar una inscripción no confirmada. | `503 Service Unavailable` o error controlado |
-| Pasarela no disponible | El sistema conserva la inscripción pendiente y permite reintentar la generación del pago. | Inscripción `PENDIENTE_PAGO` |
-| Pago rechazado | Se registra el rechazo sin confirmar la inscripción. | Pago `RECHAZADO` |
-| Pago pendiente | Se conserva el estado pendiente hasta recibir confirmación válida. | Pago `PENDIENTE` |
-| Notificación de pago duplicada | Se detecta que la operación ya fue procesada y no se aplica nuevamente. | Respuesta idempotente |
-| Pago aprobado | Se actualizan el pago y la inscripción de forma consistente. | Pago `APROBADO` e inscripción `PAGO_CONFIRMADO` |
-| Notificación no válida | El sistema rechaza la notificación sin modificar el estado de la inscripción. | Sin cambios en los datos |
+    C-->>O: Devuelve estado
+```
 
----
+El origen podrá ser una notificación del proveedor, una solicitud enviada desde el navegador o una consulta de conciliación.
 
-## 4. Patrones y Principios que se Observan en este Nivel
+La respuesta del navegador no se considerará una confirmación suficiente sin verificación en el backend. Los mecanismos concretos de autenticidad se implementarán según el contrato de cada pasarela.
 
-| **Elemento del diagrama** | **Patrón o principio** |
+## 9. Procesamiento del evento de pago
+
+```mermaid
+sequenceDiagram
+    participant D as Despacho Outbox
+    participant Q as Amazon SQS
+    participant H as Consumidor de Inscripciones
+    participant T as Persistencia transaccional
+
+    D->>Q: Publica PagoConfirmado
+    Q->>H: Entrega evento
+    H->>T: Inicia operación idempotente
+
+    alt Evento nuevo
+        T->>T: Registra evento y actualiza inscripción
+        Note over T: Habilita solo si cumple todos los requisitos
+        T-->>H: Confirma transacción
+    else Evento ya procesado
+        T-->>H: Conserva el resultado existente
+    end
+
+    H-->>Q: Confirma procesamiento
+```
+
+Notificaciones procesará los eventos que le correspondan mediante su propio consumidor. Un fallo de correo no revertirá un pago confirmado.
+
+## 10. Reglas de integridad y seguridad
+
+1. La identidad deberá validarse antes de habilitar el pago.
+2. Las inscripciones respetarán las restricciones de unicidad del proceso.
+3. Los importes y las monedas se determinarán y comprobarán en el backend.
+4. Las confirmaciones deberán corresponder a una operación conocida.
+5. Las solicitudes repetidas no generarán nuevas confirmaciones del mismo pago.
+6. El pago y su evento se guardarán dentro de una misma transacción.
+7. Los consumidores admitirán entregas repetidas de mensajes.
+8. Los resultados inciertos permanecerán pendientes hasta verificar su estado.
+9. La habilitación exigirá cumplir los requisitos de la modalidad.
+10. Las credenciales y los datos sensibles de integración permanecerán en infraestructura.
+
+## 11. Patrones y principios relacionados
+
+| Patrón o principio | Aplicación propuesta |
 |---|---|
-| `PaymentGatewayAdapter` | Patrón Adaptador: permite integrar la pasarela de pagos sin afectar las reglas de negocio. |
-| `ElegibilidadAdapter` | Patrón Adaptador: conecta la inscripción con los contratos públicos de Usuarios y Convocatorias. |
-| `InscripcionRepository` y `PostgresInscripcionRepository` | Patrón Repositorio: separa la persistencia de las reglas de negocio. |
-| `PagoRepository` y `PostgresPagoRepository` | Patrón Repositorio: encapsula el acceso a los datos de pagos. |
-| Los casos de uso reciben interfaces y no clases concretas. | Principio de Inversión de Dependencias (DIP). |
-| Cada clase tiene una responsabilidad definida. | Principio de Responsabilidad Única (SRP). |
-| Los adaptadores pueden reemplazarse respetando sus contratos. | Principios Abierto/Cerrado (OCP) y Sustitución de Liskov (LSP). |
-| Las interfaces contienen operaciones específicas. | Principio de Segregación de Interfaces (ISP). |
-| Inscripción Ordinaria utiliza los servicios públicos de Pagos. | Regla del Monolito Modular: comunicación mediante interfaces públicas. |
-| Los controladores no contienen consultas SQL. | Separación de responsabilidades de Clean Architecture. |
+| Repositorio | Persistencia mediante contratos de Inscripciones y Pagos. |
+| Adaptador | Integraciones con Izipay micuentaweb y Culqi. |
+| Inyección de dependencias | Conexión de casos de uso con repositorios y proveedores. |
+| Fábrica simple | Construcción de adaptadores según la configuración. |
+| Publicación y suscripción | Reacción de Inscripciones y Notificaciones a eventos. |
+| Transactional Outbox | Registro conjunto de operaciones y eventos. |
+| Responsabilidad Única | Separación de HTTP, coordinación, reglas y persistencia. |
+| Segregación de Interfaces | Contratos específicos para consultas, repositorios y métodos de pago. |
+| Inversión de Dependencias | Casos de uso independientes de PostgreSQL y proveedores concretos. |
 
----
+## 12. Alcance del Sprint 1
 
-## 5. Reglas de Implementación
+Este documento define el diseño inicial de código para M03 Inscripciones y M04 Pagos.
 
-| **#** | **Regla** | **Motivo** |
-|---|---|---|
-| 1 | Las entidades de dominio no deben depender de Express, PostgreSQL ni AWS. | Proteger las reglas de negocio de los cambios tecnológicos. |
-| 2 | Los controladores deben delegar los procesos a los casos de uso. | Evitar lógica de negocio dentro de la capa de presentación. |
-| 3 | Los casos de uso deben depender de interfaces. | Facilitar pruebas y sustitución de implementaciones. |
-| 4 | Los repositorios deben encapsular el acceso a PostgreSQL. | Evitar consultas SQL distribuidas entre capas. |
-| 5 | La pasarela de pagos debe integrarse mediante `PaymentPort`. | Permitir reemplazar el proveedor sin modificar la aplicación. |
-| 6 | Las inscripciones deben registrarse inicialmente como `PENDIENTE_PAGO`. | Separar el registro de la postulación de la confirmación financiera. |
-| 7 | La confirmación de pagos debe ser idempotente. | Evitar duplicidades por notificaciones repetidas. |
-| 8 | La actualización conjunta del pago y la inscripción debe garantizar consistencia transaccional. | Evitar estados contradictorios. |
-| 9 | Cada módulo debe acceder únicamente a sus datos mediante los contratos definidos. | Mantener el encapsulamiento modular. |
-| 10 | Las credenciales de servicios externos deben almacenarse de forma segura. | Proteger la integración con la pasarela de pagos. |
-
-**Consideración de diseño:** Para mantener la propiedad de los datos entre módulos, la coordinación transaccional de confirmación de pago deberá implementarse mediante contratos internos definidos, evitando que un módulo ejecute directamente consultas sobre las tablas privadas de otro.
-
----
-
-## 6. Relación con la Arquitectura General
-
-| **Aspecto** | **Implementación** |
-|---|---|
-| Estilo arquitectónico | Monolito Modular por Capas |
-| Enfoque | Clean Architecture |
-| Backend | Node.js + TypeScript + Express |
-| Despliegue | AWS Lambda |
-| Entrada REST | Amazon API Gateway |
-| Comunicación externa | HTTPS |
-| Base de datos | Amazon RDS PostgreSQL |
-| Gestión de conexiones | Amazon RDS Proxy |
-| Integración de pagos | Adaptador de pasarela mediante `PaymentPort` |
-| Comunicación entre módulos | Interfaces públicas y llamadas en memoria |
-| Seguridad | Autenticación, autorización y validación de operaciones |
-| Consistencia | Transacciones e idempotencia |
-| Patrones principales | Adaptador, Repositorio e Inyección de Dependencias |
-| Principios | SOLID |
-
----
-
-## 7. Resumen
-
-| **Aspecto** | **Descripción** |
-|---|---|
-| Proyecto | Sistema Integral de Gestión del Proceso de Admisión – UNSCH |
-| Modelo | C4 |
-| Nivel | Nivel 4 – Diagrama de Código |
-| Notación | UML |
-| Módulos detallados | M03 – Inscripción Ordinaria y M05 – Pagos |
-| Flujo principal | Registrar inscripción ordinaria y confirmar pago |
-| Capas | Presentación, Aplicación, Dominio e Infraestructura |
-| Entidades principales | `Inscripcion` y `Pago` |
-| Casos de uso principales | `RegistrarInscripcionUseCase`, `ProcesarPagoUseCase` y `ConfirmarPagoInscripcionUseCase` |
-| Interfaces principales | `InscripcionRepository`, `PagoRepository`, `ElegibilidadPort` y `PaymentPort` |
-| Persistencia | PostgreSQL |
-| Integración externa | Pasarela de Pagos |
-| Patrones | Adaptador, Repositorio e Inyección de Dependencias |
-| Principios | SOLID y Clean Architecture |
-
----
-
-## 8. Conclusión
-
-El diagrama de código del **Sistema Integral de Gestión del Proceso de Admisión – UNSCH** permite comprender la estructura interna de los módulos **Inscripción Ordinaria** y **Pagos**, identificando las clases, interfaces y relaciones necesarias para registrar postulaciones y confirmar operaciones financieras.
-
-La utilización de **Clean Architecture** garantiza la separación entre las reglas de negocio y los detalles tecnológicos, mientras que los patrones **Repositorio, Adaptador e Inyección de Dependencias** permiten reducir el acoplamiento entre componentes.
-
-El flujo de inscripción y pago establece mecanismos de validación, persistencia, confirmación segura e idempotencia, necesarios para mantener la integridad de la información del proceso de admisión.
-
-Este documento completa el **Nivel 4 del modelo C4**, proporcionando una referencia para la implementación del backend mediante **Node.js, TypeScript, Express, PostgreSQL y AWS Lambda**.
+Los nombres definitivos, tipos de datos, estados, contratos de error y detalles de las pasarelas se precisarán durante la implementación y se validarán mediante pruebas de dominio, contrato e integración.

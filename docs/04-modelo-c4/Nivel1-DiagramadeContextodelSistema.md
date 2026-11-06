@@ -1,192 +1,182 @@
 # Nivel 1 · Diagrama de Contexto del Sistema
 
-> **Proyecto:** Sistema Integral de Gestión del Proceso de Admisión – UNSCH  
-> **Modelo:** C4 · Nivel 1 de 4 · **Versión:** 1.0
-
----
+**Proyecto:** Sistema de Gestión del Proceso de Admisión – UNSCH  
+**Modelo:** C4 · Nivel 1  
+**Entrega:** Sprint 1 · Diseño inicial
 
 ## 1. Objetivo
 
-Mostrar el **Sistema Integral de Gestión del Proceso de Admisión – UNSCH como una sola caja**, identificando a los usuarios que interactúan con él y los sistemas externos con los que se comunica.
+Representar el Sistema de Gestión del Proceso de Admisión UNSCH como una unidad, identificando las personas que lo utilizarán y los sistemas externos con los que se integrará.
 
-Este diagrama representa la vista general del sistema, sin mostrar su arquitectura interna, componentes tecnológicos ni infraestructura.
+Esta vista permitirá comprender el alcance del proyecto y sus relaciones con el entorno.
 
-| **Aspecto** | **Descripción** |
+| Aspecto | Descripción |
 |---|---|
-| Pregunta que responde | ¿Qué es el sistema de admisión, quiénes lo utilizan y con qué sistemas externos se integra? |
-| Audiencia | Personal de admisión, autoridades universitarias, docentes, equipo de desarrollo y responsables de operaciones. |
-| Qué **no** muestra | Tecnologías, servidores, bases de datos, AWS Lambda, módulos internos ni detalles de implementación. |
-| Siguiente nivel | `Nivel2-Diagrama-de-Contenedores.md` |
+| Pregunta principal | ¿Quién utiliza el sistema y con qué servicios externos se relaciona? |
+| Audiencia | Personal de admisión, autoridades, docente y equipo de desarrollo. |
+| Sistema en alcance | Plataforma de gestión del proceso de admisión UNSCH. |
+| Alcance funcional | Inscripciones Ordinaria y Exonerados, pagos, expedientes, exámenes, resultados y atención al postulante. |
+| Detalles internos | Los 12 módulos, las capas y la infraestructura se desarrollarán en las vistas posteriores. |
 
----
+## 2. Diagrama de contexto
 
-## 2. Diagrama
-
-### Diagrama de contexto del Sistema Integral de Gestión del Proceso de Admisión – UNSCH
+Para facilitar la lectura, el personal de admisión y los roles especializados se agrupan en una sola categoría visual. Sus responsabilidades se detallan en la sección 3.
 
 ```mermaid
 flowchart TB
-    P["Postulante<br/>Registra su postulación, paga y consulta resultados"]
+    P["Postulante"]
+    PER["Personal de admisión y roles especializados"]
+    ADM["Administrador"]
 
-    PA["Personal de Admisión<br/>Gestiona convocatorias e inscripciones"]
+    SISTEMA["Sistema de Gestión del Proceso de Admisión – UNSCH"]
 
-    ADM["Administrador<br/>Administra usuarios, roles y configuración"]
+    subgraph IDENTIDAD_PAGOS["Servicios externos de identidad y pagos"]
+        ID["Consulta de identidad vía apiperu"]
+        TAR["Izipay micuentaweb"]
+        YAPE["Culqi"]
+    end
 
-    ED["Evaluador Documental<br/>Revisa y valida expedientes"]
+    subgraph ASISTENCIA["Servicios externos de asistencia y comunicación"]
+        IA["OpenRouter API"]
+        CORREO["Amazon SES"]
+    end
 
-    TE["Responsable de Tesorería<br/>Verifica y concilia pagos"]
+    P -->|"Se inscribe, paga y consulta información"| SISTEMA
+    PER -->|"Gestiona y supervisa el proceso"| SISTEMA
+    ADM -->|"Administra usuarios, permisos y configuración"| SISTEMA
 
-    CE["Coordinador de Exámenes<br/>Programa exámenes y asigna aulas"]
+    SISTEMA -->|"Consulta datos de identidad"| ID
+    SISTEMA -->|"Solicita pagos con tarjeta y verifica su estado"| TAR
+    SISTEMA -->|"Solicita pagos con Yape y verifica su estado"| YAPE
+    SISTEMA -->|"Solicita respuestas para el chatbot"| IA
+    SISTEMA -->|"Solicita el envío de correos"| CORREO
 
-    RR["Responsable de Resultados<br/>Procesa y publica resultados"]
+    classDef persona fill:#244478,color:#ffffff,stroke:#19345f
+    classDef principal fill:#2563eb,color:#ffffff,stroke:#1d4ed8,stroke-width:3px
+    classDef externo fill:#e5e7eb,color:#111827,stroke:#6b7280
 
-    SO["Personal de Soporte<br/>Atiende consultas e incidencias"]
-
-    SISTEMA["Sistema Integral de Gestión<br/>del Proceso de Admisión – UNSCH<br/><br/>Gestiona inscripciones, pagos, expedientes,<br/>exámenes, resultados y atención mediante IA"]
-
-    RENIEC["RENIEC<br/>Servicio externo de validación de identidad"]
-
-    PAGOS["Pasarela de Pagos<br/>Servicio externo de procesamiento de pagos"]
-
-    IA["OpenRouter API<br/>Servicio externo de inteligencia artificial"]
-
-    CORREO["Servicio de Correo<br/>Envío de notificaciones"]
-
-    SMS["Servicio SMS<br/>Notificaciones opcionales"]
-
-    P -->|"Realiza inscripción y consultas"| SISTEMA
-    PA -->|"Gestiona procesos de admisión"| SISTEMA
-    ADM -->|"Administra y configura"| SISTEMA
-    ED -->|"Evalúa expedientes"| SISTEMA
-    TE -->|"Verifica pagos"| SISTEMA
-    CE -->|"Organiza exámenes"| SISTEMA
-    RR -->|"Gestiona resultados"| SISTEMA
-    SO -->|"Resuelve incidencias"| SISTEMA
-
-    SISTEMA -->|"Valida identidad"| RENIEC
-    SISTEMA -->|"Solicita y verifica pagos"| PAGOS
-    SISTEMA -->|"Solicita respuestas de IA"| IA
-    SISTEMA -->|"Envía notificaciones"| CORREO
-    SISTEMA -.->|"Envía avisos opcionales"| SMS
-
-    classDef usuario fill:#244478,color:#ffffff,stroke:#19345f
-    classDef sistema fill:#2563eb,color:#ffffff,stroke:#1d4ed8,stroke-width:3px
-    classDef externo fill:#929292,color:#ffffff,stroke:#666666
-
-    class P,PA,ADM,ED,TE,CE,RR,SO usuario
-    class SISTEMA sistema
-    class RENIEC,PAGOS,IA,CORREO,SMS externo
+    class P,PER,ADM persona
+    class SISTEMA principal
+    class ID,TAR,YAPE,IA,CORREO externo
 ```
 
-**Descripción:** El Sistema Integral de Gestión del Proceso de Admisión – UNSCH centraliza los procesos de admisión universitaria y permite la interacción de postulantes y personal autorizado con servicios externos de validación de identidad, pagos, inteligencia artificial y notificaciones.
+Las relaciones expresan el propósito de la interacción. Las solicitudes, respuestas y confirmaciones técnicas se detallarán en los niveles posteriores.
 
----
+## 3. Personas que utilizarán el sistema
 
-## 3. Personas (usuarios)
-
-| **Persona** | **Descripción** | **Qué hace en el sistema** |
+| Persona | Responsabilidad | Interacción principal |
 |---|---|---|
-| **Postulante** | Persona que desea ingresar a la Universidad Nacional de San Cristóbal de Huamanga. | Registra sus datos, selecciona modalidad y programa de estudios, adjunta documentos, realiza pagos, consulta su inscripción, ubicación de examen y resultados. |
-| **Personal de Admisión** | Responsable de administrar los procesos de admisión universitaria. | Gestiona convocatorias, postulantes, inscripciones y seguimiento de los procesos. |
-| **Administrador** | Responsable de la administración y configuración del sistema. | Gestiona usuarios, roles, permisos, modalidades, programas, vacantes y parámetros del sistema. |
-| **Evaluador Documental** | Personal encargado de revisar los documentos presentados por los postulantes. | Evalúa expedientes, aprueba documentos y registra observaciones. |
-| **Responsable de Tesorería** | Personal encargado de supervisar los pagos de inscripción. | Consulta, verifica y concilia los pagos realizados por los postulantes. |
-| **Coordinador de Exámenes** | Responsable de organizar las evaluaciones de admisión. | Programa exámenes, administra sedes y aulas, y asigna ambientes a los postulantes. |
-| **Responsable de Resultados** | Personal autorizado para gestionar las calificaciones. | Registra, valida y publica los resultados oficiales de admisión. |
-| **Personal de Soporte** | Personal encargado de brindar asistencia a los usuarios. | Atiende consultas, incidencias y solicitudes derivadas del chatbot inteligente. |
+| Postulante | Participar en el proceso de admisión. | Registrar datos, seleccionar modalidad y programa, presentar documentos, pagar y consultar inscripción, aula y resultados. |
+| Personal de Admisión | Gestionar el proceso de admisión. | Administrar convocatorias, postulantes e inscripciones y consultar reportes. |
+| Administrador | Administrar el acceso y la configuración. | Gestionar usuarios, roles, permisos y parámetros generales. |
+| Evaluador Documental | Revisar los documentos presentados. | Aprobar, observar o rechazar expedientes y revisar subsanaciones. |
+| Responsable de Tesorería | Supervisar los pagos de inscripción. | Verificar transacciones, conciliar pagos y consultar recaudación. |
+| Coordinador de Exámenes | Organizar las evaluaciones. | Programar exámenes, gestionar sedes y aulas y distribuir postulantes. |
+| Responsable de Resultados | Gestionar calificaciones y resultados. | Registrar, validar y publicar resultados según los permisos y aprobaciones establecidos. |
+| Personal de Soporte | Atender consultas e incidencias. | Resolver solicitudes y atender casos derivados del chatbot. |
 
----
+Los roles especializados se representan como personas con responsabilidades diferentes, aunque utilicen la misma plataforma.
 
-## 4. Sistemas
+## 4. Sistema en alcance
 
-| **Sistema** | **Tipo** | **Responsabilidad** | **Quién lo construye o administra** |
-|---|---|---|---|
-| **Sistema Integral de Gestión del Proceso de Admisión – UNSCH** | Sistema en alcance | Gestionar convocatorias, postulantes, inscripciones ordinarias y de exonerados, pagos, expedientes, exámenes, resultados, reportes y atención mediante chatbot inteligente. | Equipo de desarrollo del proyecto. |
-| **RENIEC** | Sistema externo | Validar los datos de identidad de los postulantes mediante servicios autorizados. | Registro Nacional de Identificación y Estado Civil. |
-| **Pasarela de Pagos** | Sistema externo | Procesar pagos de inscripción y proporcionar información sobre su estado. | Proveedor de servicios de pago por definir. |
-| **OpenRouter API** | Sistema externo | Proporcionar acceso a modelos de inteligencia artificial para responder consultas del chatbot. | OpenRouter. |
-| **Servicio de Correo Electrónico** | Sistema externo | Enviar confirmaciones, observaciones y notificaciones a los postulantes. | Proveedor de correo por definir. |
-| **Servicio SMS** | Sistema externo opcional | Enviar avisos y recordatorios mediante mensajes de texto. | Proveedor SMS por definir. |
+| Sistema | Responsabilidad |
+|---|---|
+| Sistema de Gestión del Proceso de Admisión – UNSCH | Centralizar la gestión de convocatorias, usuarios, inscripciones, pagos, expedientes, exámenes, sedes, aulas, resultados, orientación, notificaciones, reportes, seguridad y configuración. |
 
----
+Su organización interna comprenderá 12 módulos funcionales:
 
-## 5. Relaciones
+| Código | Módulo |
+|---|---|
+| M01 | Convocatorias |
+| M02 | Usuarios |
+| M03 | Inscripciones: Ordinaria y Exonerados |
+| M04 | Pagos |
+| M05 | Expedientes |
+| M06 | Exámenes, Sedes y Aulas |
+| M07 | Resultados |
+| M08 | Chatbot IA |
+| M09 | Notificaciones |
+| M10 | Reportes |
+| M11 | Seguridad |
+| M12 | Configuración |
 
-| **Origen** | **Destino** | **Descripción** | **Protocolo** |
-|---|---|---|---|
-| Postulante | Sistema de Admisión UNSCH | Registra datos, realiza inscripciones, consulta pagos, exámenes y resultados. | — |
-| Personal de Admisión | Sistema de Admisión UNSCH | Administra convocatorias, postulantes e inscripciones. | — |
-| Administrador | Sistema de Admisión UNSCH | Gestiona usuarios, roles, permisos y configuración. | — |
-| Evaluador Documental | Sistema de Admisión UNSCH | Revisa, aprueba u observa expedientes. | — |
-| Responsable de Tesorería | Sistema de Admisión UNSCH | Verifica y concilia pagos. | — |
-| Coordinador de Exámenes | Sistema de Admisión UNSCH | Programa evaluaciones y asigna sedes y aulas. | — |
-| Responsable de Resultados | Sistema de Admisión UNSCH | Procesa, valida y publica resultados. | — |
-| Personal de Soporte | Sistema de Admisión UNSCH | Atiende consultas e incidencias. | — |
-| Sistema de Admisión UNSCH | RENIEC | Solicita validación de identidad de postulantes. | HTTPS / API autorizada |
-| Sistema de Admisión UNSCH | Pasarela de Pagos | Solicita operaciones de pago y verifica confirmaciones. | HTTPS / REST |
-| Sistema de Admisión UNSCH | OpenRouter API | Envía consultas autorizadas y recibe respuestas de inteligencia artificial. | HTTPS / REST |
-| Sistema de Admisión UNSCH | Servicio de Correo | Solicita el envío de confirmaciones y notificaciones. | HTTPS / API o protocolo seguro del proveedor |
-| Sistema de Admisión UNSCH | Servicio SMS | Solicita el envío de notificaciones opcionales. | HTTPS / API |
+Los módulos se enumeran para mantener la trazabilidad del alcance. En el diagrama de contexto permanecen contenidos dentro de una sola representación del sistema.
 
-> En el nivel 1 no se especifica el protocolo de comunicación entre las personas y el sistema. Los detalles de HTTPS, API Gateway, AWS Lambda y demás tecnologías se describirán en el diagrama de contenedores del nivel 2.
+## 5. Sistemas externos
 
----
-
-## 6. Decisiones y supuestos
-
-| **#** | **Decisión o supuesto** | **Motivo** |
+| Sistema externo | Responsabilidad | Relación con el sistema UNSCH |
 |---|---|---|
-| 1 | El Sistema de Admisión UNSCH centralizará los procesos de admisión ordinaria y de exonerados. | Facilitar la gestión institucional y evitar procesos aislados. |
-| 2 | Los postulantes utilizarán una plataforma web para realizar sus inscripciones. | Permitir el acceso desde computadoras y dispositivos móviles. |
-| 3 | La validación de identidad se realizará mediante RENIEC, siempre que exista autorización de acceso. | Mejorar la verificación de los datos personales. |
-| 4 | Los pagos se procesarán mediante una pasarela externa. | Evitar que el sistema procese directamente información sensible de tarjetas bancarias. |
-| 5 | El chatbot utilizará OpenRouter API. | Proporcionar orientación automatizada y seguimiento de procesos de admisión. |
-| 6 | Los servicios externos se integrarán mediante interfaces y adaptadores. | Reducir el acoplamiento y facilitar el cambio de proveedores. |
-| 7 | El sistema contará con autenticación y autorización basada en roles. | Restringir el acceso a información y operaciones administrativas. |
-| 8 | Las comunicaciones entre el sistema y los servicios externos utilizarán HTTPS cuando corresponda. | Proteger la información transmitida. |
-| 9 | Los resultados oficiales solo podrán publicarse después de su validación y autorización. | Garantizar la integridad y confiabilidad del proceso. |
-| 10 | Los sistemas externos no forman parte del desarrollo del proyecto. | Son administrados por terceros y se utilizarán mediante integraciones autorizadas. |
+| Consulta de identidad vía apiperu | Proporcionar consultas de datos de identidad vinculados a RENIEC, conforme a las condiciones y autorizaciones aplicables. | Permitir verificar la identidad del postulante antes de habilitar el pago. |
+| Izipay micuentaweb | Procesar pagos con tarjeta y comunicar su estado. | Permitir pagar la inscripción y verificar la confirmación de la transacción. |
+| Culqi | Proporcionar el procesamiento de pagos con Yape. | Permitir pagar mediante Yape y verificar el resultado de la operación. |
+| OpenRouter API | Proporcionar acceso a modelos de inteligencia artificial. | Generar respuestas del chatbot a partir de consultas y datos autorizados. |
+| Amazon SES | Proporcionar el servicio de envío de correo electrónico. | Enviar confirmaciones y avisos relacionados con el proceso de admisión. |
 
----
+La relación de identidad se representa mediante apiperu porque será el punto de integración seleccionado. No se representa una conexión directa del sistema con RENIEC.
+
+## 6. Relaciones principales
+
+| Origen | Destino | Propósito |
+|---|---|---|
+| Postulante | Sistema UNSCH | Registrar su postulación, efectuar pagos y consultar su proceso. |
+| Personal de Admisión | Sistema UNSCH | Gestionar convocatorias, postulantes e inscripciones. |
+| Administrador | Sistema UNSCH | Administrar usuarios, permisos y configuración. |
+| Evaluador Documental | Sistema UNSCH | Revisar expedientes y registrar observaciones o aprobaciones. |
+| Responsable de Tesorería | Sistema UNSCH | Verificar y conciliar pagos. |
+| Coordinador de Exámenes | Sistema UNSCH | Programar evaluaciones y asignar ambientes. |
+| Responsable de Resultados | Sistema UNSCH | Gestionar calificaciones y publicar resultados autorizados. |
+| Personal de Soporte | Sistema UNSCH | Atender consultas e incidencias. |
+| Sistema UNSCH | Consulta de identidad vía apiperu | Verificar datos de identidad del postulante. |
+| Sistema UNSCH | Izipay micuentaweb | Solicitar y verificar pagos con tarjeta. |
+| Sistema UNSCH | Culqi | Solicitar y verificar pagos con Yape. |
+| Sistema UNSCH | OpenRouter API | Solicitar respuestas para la orientación y el seguimiento autorizado. |
+| Sistema UNSCH | Amazon SES | Solicitar el envío de correos electrónicos. |
+
+## 7. Decisiones y supuestos iniciales
+
+| N.º | Decisión o supuesto | Justificación |
+|---|---|---|
+| 1 | Ordinaria y Exonerados se gestionarán en una misma plataforma. | Centralizar el proceso conservando las reglas de cada modalidad. |
+| 2 | Los postulantes accederán mediante una aplicación web responsiva. | Facilitar el uso desde computadoras y dispositivos móviles. |
+| 3 | La inscripción no exigirá crear una cuenta; el acceso a información personal requerirá mecanismos de verificación. | Facilitar el registro y proteger las consultas de seguimiento. |
+| 4 | La consulta de identidad se realizará mediante apiperu, sujeta a las condiciones de acceso del proveedor. | Verificar los datos del postulante antes del pago. |
+| 5 | Se utilizarán Izipay micuentaweb para tarjetas y Culqi para Yape. | Ofrecer los métodos de pago seleccionados. |
+| 6 | Las confirmaciones de pago se verificarán en el backend. | Evitar habilitar inscripciones a partir de respuestas no verificadas del navegador. |
+| 7 | El chatbot utilizará OpenRouter API. | Brindar orientación y seguimiento con acceso controlado a información. |
+| 8 | Las notificaciones externas se enviarán mediante Amazon SES. | Comunicar estados y acontecimientos relevantes por correo electrónico. |
+| 9 | El personal utilizará permisos según sus responsabilidades. | Restringir las operaciones administrativas y el acceso a datos. |
+| 10 | Los resultados se publicarán después de su validación y autorización. | Proteger la integridad del proceso de admisión. |
+| 11 | Los servicios externos serán administrados por sus proveedores. | Delimitar las responsabilidades del proyecto. |
+
+## 8. Aspectos por validar
+
+| Tema | Validación necesaria |
+|---|---|
+| Consulta de identidad | Condiciones de uso, autorización, cobertura y credenciales del proveedor. |
+| Pagos | Condiciones comerciales, credenciales y procedimientos de confirmación y conciliación. |
+| Correo electrónico | Remitente autorizado y condiciones de envío. |
+| Chatbot | Modelo, límites de consumo y criterios de derivación al personal de soporte. |
+| Protección de datos | Información que podrá consultarse, almacenarse y enviarse a proveedores externos. |
+| Roles y permisos | Responsabilidades aprobadas por el área de admisión. |
+| Reglas de admisión | Requisitos, modalidades, cronogramas, vacantes y condiciones oficiales. |
+| Resultados | Responsables de validación, autorización y publicación. |
+
+## 9. Alcance del Sprint 1
+
+Esta vista establece las personas, los límites del sistema y las integraciones seleccionadas para la propuesta inicial.
+
+El nivel 2 del modelo C4 describirá la aplicación web, el backend, la base de datos y los servicios de almacenamiento y mensajería. El nivel 3 detallará los componentes internos del backend modular.
 
 ## 7. Pendientes por definir
 
-| **Tema** | **Detalle** |
-|---|---|
-| **Acceso a RENIEC** | Confirmar los requisitos institucionales, credenciales y servicios disponibles para validar el DNI de los postulantes. |
-| **Proveedor de pagos** | Seleccionar la pasarela de pagos y definir los métodos de pago, confirmaciones y conciliación. |
-| **Servicio de correo** | Definir el proveedor encargado de enviar confirmaciones y notificaciones. |
-| **Servicio SMS** | Determinar si se implementarán notificaciones mediante mensajes de texto. |
-| **Modelo de IA** | Seleccionar el modelo disponible mediante OpenRouter API y establecer sus límites de uso. |
-| **Política de privacidad** | Definir qué información puede enviarse al chatbot y a los servicios externos. |
-| **Roles y permisos** | Validar con el área de admisión las responsabilidades de cada usuario administrativo. |
-| **Reglas de admisión** | Confirmar los requisitos, modalidades, vacantes y procedimientos oficiales de cada convocatoria. |
-| **Publicación de resultados** | Definir los responsables y procedimientos de aprobación de resultados oficiales. |
-
----
-
-## 8. Relación con los siguientes niveles C4
-
-| **Nivel** | **Diagrama** | **Descripción** |
+| **Tema** | **Detalle** | **Resolución (02/11/2026)** |
 |---|---|---|
-| **Nivel 1** | Diagrama de Contexto | Identifica usuarios, sistema principal y sistemas externos. |
-| **Nivel 2** | Diagrama de Contenedores | Muestra aplicación web, API Gateway, AWS Lambda, PostgreSQL, Redis y demás componentes desplegables. |
-| **Nivel 3** | Diagrama de Componentes | Describe los módulos funcionales y las capas internas del backend. |
-| **Nivel 4** | Diagrama de Código | Presenta clases, interfaces, casos de uso, repositorios y adaptadores. |
-
----
-
-## 9. Resumen
-
-| **Aspecto** | **Descripción** |
-|---|---|
-| Proyecto | Sistema Integral de Gestión del Proceso de Admisión – UNSCH |
-| Modelo arquitectónico | C4 |
-| Nivel | Nivel 1 – Contexto del Sistema |
-| Usuarios principales | 8 tipos de usuarios |
-| Sistema principal | Sistema Integral de Gestión del Proceso de Admisión – UNSCH |
-| Sistemas externos | RENIEC, pasarela de pagos, OpenRouter API, correo electrónico y SMS opcional |
-| Integraciones | Servicios externos mediante interfaces seguras |
-| Alcance | Gestión integral del proceso de admisión universitaria |
-| Siguiente documento | `Nivel2-Diagrama-de-Contenedores.md` |
-
+| **Acceso a RENIEC** | Confirmar los requisitos institucionales, credenciales y servicios disponibles para validar el DNI de los postulantes. | ✅ apiperu.dev con token; simulador para desarrollo |
+| **Proveedor de pagos** | Seleccionar la pasarela de pagos y definir los métodos de pago, confirmaciones y conciliación. | ✅ Izipay micuentaweb para tarjeta (ADR-016) y Culqi para Yape (ADR-019); conciliación en Tesorería. Faltan las claves de producción |
+| **Servicio de correo** | Definir el proveedor encargado de enviar confirmaciones y notificaciones. | ✅ Amazon SES |
+| **Servicio SMS** | Determinar si se implementarán notificaciones mediante mensajes de texto. | No se implementa por ahora (opcional, RC16) |
+| **Modelo de IA** | Seleccionar el modelo disponible mediante OpenRouter API y establecer sus límites de uso. | ✅ Modelo configurable (`OPENROUTER_MODEL`), presupuesto diario y modo básico sin clave (ADR-017) |
+| **Política de privacidad** | Definir qué información puede enviarse al chatbot y a los servicios externos. | ✅ Datos mínimos con pase firmado; consentimiento en la inscripción y anonimización por retención |
+| **Roles y permisos** | Validar con el área de admisión las responsabilidades de cada usuario administrativo. | ✅ 8 roles definidos en el panel (ADR-018); pendiente la validación formal con la Dirección de Admisión |
+| **Reglas de admisión** | Confirmar los requisitos, modalidades, vacantes y procedimientos oficiales de cada convocatoria. | ✅ Configurables como datos en el panel (catálogo del concurso) |
+| **Publicación de resultados** | Definir los responsables y procedimientos de aprobación de resultados oficiales. | ✅ Aprobación de otra persona y publicación a la hora autorizada |

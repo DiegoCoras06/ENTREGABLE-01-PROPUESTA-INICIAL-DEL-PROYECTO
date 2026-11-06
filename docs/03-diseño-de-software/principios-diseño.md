@@ -1,195 +1,192 @@
-# Principios de Diseño (SOLID)
+# 9. Principios de Diseño SOLID
 
-## Sistema Integral de Gestión del Proceso de Admisión – UNSCH
+## Sistema de Gestión del Proceso de Admisión – UNSCH
 
-## 1. Objetivo
+## 9.1. Objetivo
 
-Documentar cómo se aplican los principios SOLID en el backend del Sistema Integral de Gestión del Proceso de Admisión – UNSCH, organizado mediante Clean Architecture, para garantizar que los módulos se desarrollen de manera uniforme, mantenible y desacoplada de las tecnologías externas.
+Definir cómo se aplicarán los principios SOLID en el diseño del backend para mantener responsabilidades claras, facilitar las pruebas y reducir la dependencia de tecnologías y proveedores externos.
 
-## 2. Contexto
+Este documento corresponde a la propuesta de diseño inicial del Sprint 1.
 
-- **Estilo arquitectónico:** Monolito Modular por Capas.
-- **Enfoque interno:** Clean Architecture.
-- **Capas:** Presentación, Aplicación, Dominio e Infraestructura.
-- **Backend:** Node.js + TypeScript + Express.
-- **Despliegue:** AWS Lambda.
-- **Comunicación:** API REST mediante HTTPS.
-- **Base de datos:** Amazon RDS PostgreSQL.
-- **Caché:** Redis mediante Amazon ElastiCache.
-- **Módulo de referencia:** Inscripción Ordinaria, porque integra validación de postulantes, convocatorias, registro de inscripciones y persistencia en PostgreSQL.
+## 9.2. Contexto arquitectónico
 
-## 3. SOLID en el módulo Inscripción Ordinaria
+| Aspecto | Definición |
+|---|---|
+| Estilo arquitectónico | Monolito Modular por Capas. |
+| Enfoque interno | Clean Architecture. |
+| Organización | 12 módulos funcionales dentro de una aplicación backend. |
+| Capas internas | Interfaces, Aplicación, Dominio e Infraestructura. |
+| Frontend | Angular. |
+| Backend | Node.js, TypeScript y Express. |
+| Acceso y ejecución | Amazon API Gateway y AWS Lambda. |
+| Comunicación | API REST mediante HTTPS. |
+| Persistencia | Amazon RDS PostgreSQL. |
+| Documentos | Amazon S3 privado. |
+| Eventos | Outbox en PostgreSQL y Amazon SQS. |
+| Integraciones | RENIEC vía apiperu, Izipay micuentaweb, Culqi, OpenRouter API y Amazon SES. |
+| Módulo de referencia | M03 Inscripciones: Ordinaria y Exonerados. |
 
-### Diagrama de aplicación de SOLID
+## 9.3. Aplicación de los cinco principios
+
+| Principio | Criterio de diseño | Aplicación en el sistema |
+|---|---|---|
+| S — Responsabilidad Única | Cada componente tendrá una responsabilidad coherente y una razón principal para cambiar. | El controlador gestionará HTTP; el caso de uso coordinará la operación; el dominio aplicará reglas; el repositorio resolverá la persistencia. |
+| O — Abierto/Cerrado | Los componentes permitirán extender comportamientos mediante contratos estables, limitando los cambios en la lógica existente. | Se podrán incorporar adaptadores de identidad, pagos o correo sin introducir detalles del proveedor en los casos de uso. |
+| L — Sustitución de Liskov | Las implementaciones de un contrato deberán conservar sus condiciones y comportamientos esperados. | Un repositorio simulado podrá sustituir al de PostgreSQL en las pruebas que correspondan, respetando resultados, errores y reglas del contrato. |
+| I — Segregación de Interfaces | Los componentes dependerán únicamente de las operaciones que necesiten. | Un caso de uso de consulta no dependerá de operaciones para registrar, anular o modificar inscripciones. |
+| D — Inversión de Dependencias | Las reglas y los casos de uso dependerán de abstracciones; los detalles tecnológicos implementarán esas abstracciones. | Los casos de uso utilizarán interfaces de persistencia e integración, suministradas mediante inyección de dependencias. |
+
+## 9.4. Aplicación en el módulo Inscripciones
+
+El módulo M03 gestionará las modalidades Ordinaria y Exonerados. Compartirá las operaciones comunes y mantendrá separadas las reglas particulares de cada modalidad.
+
+### Responsabilidad Única
+
+El registro de una inscripción se distribuirá entre componentes con funciones definidas:
+
+| Componente propuesto | Responsabilidad |
+|---|---|
+| `InscripcionesController` | Recibir solicitudes, validar su formato y devolver respuestas HTTP. |
+| `RegistrarInscripcionUseCase` | Coordinar el registro y las validaciones necesarias. |
+| `Inscripcion` | Representar la inscripción y proteger sus reglas y transiciones de estado. |
+| Reglas por modalidad | Evaluar las condiciones particulares de Ordinaria y Exonerados. |
+| `PostgresInscripcionesRepository` | Ejecutar las operaciones de persistencia. |
+| Adaptadores de integración | Comunicarse con los servicios externos requeridos. |
+
+La separación se realizará según las responsabilidades y necesidades del proceso, evitando crear clases sin una finalidad concreta.
+
+### Abierto/Cerrado
+
+Los casos de uso utilizarán contratos que permitan incorporar implementaciones alternativas.
+
+Por ejemplo, un cambio en el proveedor de consulta de identidad se resolverá mediante un adaptador que respete `IdentityProvider`. Los detalles de autenticación y respuesta del proveedor permanecerán fuera de las reglas de inscripción.
+
+Los cambios reales en las reglas de negocio podrán requerir modificar el dominio. Este principio no implica que el código existente nunca deba cambiar.
+
+### Sustitución de Liskov
+
+Las implementaciones de un mismo contrato deberán comportarse de forma compatible.
+
+Por ejemplo, los repositorios de PostgreSQL y de prueba deberán respetar:
+
+- El significado de los resultados devueltos.
+- La representación de una inscripción inexistente.
+- Los errores previstos para duplicidades.
+- Las condiciones de las operaciones de registro y actualización.
+
+Cumplir una interfaz de TypeScript no será suficiente: también se verificará el comportamiento mediante pruebas de contrato.
+
+### Segregación de Interfaces
+
+Los contratos se definirán según las necesidades de sus consumidores.
+
+| Contrato propuesto | Operaciones necesarias |
+|---|---|
+| `InscripcionesConsulta` | Buscar inscripciones y consultar estados. |
+| `InscripcionesRegistro` | Registrar una inscripción y verificar duplicidades. |
+| `ConvocatoriasConsulta` | Consultar vigencia y condiciones de la convocatoria. |
+| `IdentityProvider` | Consultar los datos de identidad necesarios. |
+
+La separación se aplicará cuando evite dependencias innecesarias, sin fragmentar artificialmente todas las interfaces.
+
+### Inversión de Dependencias
+
+Registrar Inscripción dependerá de contratos internos y no de clientes concretos de PostgreSQL o de servicios externos.
+
+La composición de la aplicación conectará el caso de uso con los repositorios y adaptadores elegidos.
+
+Esto permitirá probar la coordinación del proceso mediante implementaciones controladas, sin requerir servicios externos reales en cada prueba.
+
+## 9.5. Diagrama de dependencias
 
 ```mermaid
 flowchart TB
-    WEB["Aplicación Web<br/>Postulante"]
-    API["API Gateway<br/>HTTPS / REST"]
+    CTRL["Controlador de Inscripciones"]
 
-    subgraph LAMBDA["AWS Lambda - Monolito Modular"]
-        direction TB
+    subgraph INTERNAS["Aplicación y Dominio"]
+        UC["Registrar inscripción"]
+        ENT["Entidad y reglas por modalidad"]
+        REP["Contrato de persistencia"]
+        VAL["Contratos de consulta y validación"]
 
-        subgraph PRESENTACION["Presentación"]
-            CTRL["InscripcionController<br/>Recibe solicitudes HTTP"]
-        end
-
-        subgraph APLICACION["Aplicación"]
-            UC["RegistrarInscripcionUseCase<br/>Coordina la inscripción"]
-        end
-
-        subgraph DOMINIO["Dominio"]
-            ENT["Inscripcion<br/>Reglas de negocio"]
-            REPO["InscripcionRepository<br/>Interfaz"]
-            ELEG["ElegibilidadPort<br/>Interfaz"]
-        end
-
-        subgraph INFRA["Infraestructura"]
-            PG["PostgresInscripcionRepository"]
-            ADP["ElegibilidadAdapter"]
-        end
-
-        COMP["InscripcionOrdinariaModule<br/>Inyección de dependencias"]
+        UC --> ENT
+        UC --> REP
+        UC --> VAL
     end
 
-    DB[("Amazon RDS PostgreSQL")]
-    MOD["Módulos Usuarios y Convocatorias"]
+    subgraph INFRA["Infraestructura"]
+        PG["Repositorio PostgreSQL"]
+        ADP["Adaptadores de consultas y servicios"]
+    end
 
-    WEB -->|"HTTPS"| API
-    API --> CTRL
     CTRL --> UC
-
-    UC --> ENT
-    UC --> REPO
-    UC --> ELEG
-
-    PG -.->|"Implementa"| REPO
-    ADP -.->|"Implementa"| ELEG
-
-    PG --> DB
-    ADP --> MOD
-
-    COMP -.-> UC
-    COMP -.-> PG
-    COMP -.-> ADP
-
-    classDef presentacion fill:#bfdbfe,stroke:#2563eb,color:#1e3a8a
-    classDef aplicacion fill:#bbf7d0,stroke:#16a34a,color:#14532d
-    classDef dominio fill:#fef3c7,stroke:#d97706,color:#78350f
-    classDef infraestructura fill:#ddd6fe,stroke:#7c3aed,color:#4c1d95
-
-    class WEB,API,CTRL presentacion
-    class UC aplicacion
-    class ENT,REPO,ELEG dominio
-    class PG,ADP,COMP,DB,MOD infraestructura
+    PG -.->|"Implementa"| REP
+    ADP -.->|"Implementan"| VAL
 ```
 
-### Aplicación de los cinco principios SOLID
+Las flechas continuas representan dependencias de uso y las discontinuas representan implementación de contratos.
 
-| Principio | Dónde se aplica (capa) | Cómo se cumple en el sistema UNSCH | Archivos |
-|---|---|---|---|
-| **S - Responsabilidad Única (SRP)** | Todas las capas | Cada clase tiene una responsabilidad específica: el controlador recibe solicitudes HTTP, el caso de uso coordina la inscripción, la entidad aplica las reglas de negocio y el repositorio guarda la información en PostgreSQL. | `inscripcion.controller.ts`, `registrar-inscripcion.use-case.ts`, `inscripcion.ts`, `postgres-inscripcion.repository.ts` |
-| **O - Abierto/Cerrado (OCP)** | Aplicación e Infraestructura | Para incorporar otra implementación de persistencia o validación de elegibilidad, se crea un nuevo adaptador sin modificar el caso de uso, siempre que se mantenga el contrato establecido. | `inscripcion-repository.ts`, `postgres-inscripcion.repository.ts`, `elegibilidad-port.ts`, `elegibilidad.adapter.ts` |
-| **L - Sustitución de Liskov (LSP)** | Dominio e Infraestructura | Las implementaciones de `InscripcionRepository` y `ElegibilidadPort` deben respetar sus contratos, permitiendo sustituirlas por implementaciones de prueba o alternativas sin alterar el comportamiento esperado. | `inscripcion-repository.ts`, `postgres-inscripcion.repository.ts`, `elegibilidad-port.ts`, `elegibilidad.adapter.ts` |
-| **I - Segregación de Interfaces (ISP)** | Dominio | Cada interfaz contiene únicamente las operaciones necesarias: `InscripcionRepository` permite guardar y consultar inscripciones, mientras que `ElegibilidadPort` verifica las condiciones de inscripción. | `inscripcion-repository.ts`, `elegibilidad-port.ts` |
-| **D - Inversión de Dependencias (DIP)** | Aplicación e Infraestructura | El caso de uso depende de interfaces y no conoce directamente PostgreSQL ni los módulos externos. Las implementaciones concretas se conectan mediante inyección de dependencias. | `registrar-inscripcion.use-case.ts`, `inscripcion-ordinaria.module.ts` |
+Las implementaciones concretas se proporcionarán desde la composición de la aplicación. El dominio no dependerá de PostgreSQL, AWS ni de proveedores externos.
 
-## 4. Cómo funciona cada principio
+## 9.6. Ejemplos de cambios y respuesta del diseño
 
-| Principio | Explicación |
+| Cambio | Respuesta prevista |
 |---|---|
-| **Responsabilidad Única (S)** | Cada clase realiza una tarea específica y tiene una razón principal para cambiar. |
-| **Abierto/Cerrado (O)** | Se pueden incorporar nuevas implementaciones mediante extensiones sin modificar innecesariamente el código existente. |
-| **Sustitución de Liskov (L)** | Una implementación puede reemplazar a otra si mantiene las condiciones y comportamientos definidos por su interfaz. |
-| **Segregación de Interfaces (I)** | Los componentes dependen únicamente de las operaciones que realmente necesitan. |
-| **Inversión de Dependencias (D)** | Los casos de uso dependen de abstracciones, mientras que los detalles tecnológicos implementan dichas abstracciones. |
+| Cambia la API de consulta de identidad. | Actualizar el adaptador de apiperu y comprobar que mantiene el contrato interno. |
+| Se incorpora otro proveedor de pagos con capacidades compatibles. | Agregar un adaptador y ajustar su selección en la composición. |
+| Una forma de pago requiere operaciones diferentes. | Definir un contrato específico sin obligar a otros adaptadores a implementar funciones que no admiten. |
+| Cambian los requisitos de Exonerados. | Actualizar las reglas de esa modalidad y sus pruebas dentro de Inscripciones y Expedientes, según corresponda. |
+| Cambia el almacenamiento de documentos. | Incorporar otra implementación de `FileStorage`. |
+| Se necesita probar una inscripción sin servicios reales. | Inyectar repositorios y proveedores de prueba que respeten los contratos. |
+| Cambia el proveedor del chatbot. | Sustituir el adaptador de `LlmProvider` y validar sus capacidades, respuestas y errores. |
 
-## 5. Qué pasaría sin SOLID en el sistema UNSCH
+Izipay para tarjetas y Culqi para Yape podrán utilizar contratos distintos cuando sus capacidades lo requieran. No se asumirán intercambiables únicamente por ser proveedores de pagos.
 
-| Situación real | Sin SOLID | Con SOLID |
+## 9.7. Aplicación en los 12 módulos
+
+| Código | Módulo | Aplicación principal de SOLID |
 |---|---|---|
-| Se modifica la integración con RENIEC. | Se deben modificar directamente los casos de uso que validan identidades. | Se modifica o reemplaza `reniec.adapter.ts`. |
-| Se cambia la pasarela de pagos. | El módulo Pagos depende directamente del proveedor anterior. | Se crea un nuevo adaptador que implementa `PaymentPort`. |
-| Se cambia la implementación de persistencia. | Las reglas de negocio contienen consultas SQL y deben modificarse. | Se modifica la implementación del repositorio manteniendo su interfaz. |
-| Se necesita probar una inscripción. | Se requiere conectar PostgreSQL y utilizar servicios externos reales. | Se utilizan repositorios y adaptadores simulados. |
-| Cambian las reglas de inscripción ordinaria. | Las validaciones están distribuidas entre controladores y consultas SQL. | Las reglas se mantienen en el dominio y se coordinan desde los casos de uso. |
-| Se modifica el proveedor de inteligencia artificial. | El módulo Chatbot depende directamente de OpenRouter API. | Se reemplaza el adaptador que implementa `AiPort`. |
-| Se agrega una nueva modalidad de admisión. | Se modifican múltiples componentes sin una estructura definida. | Se incorporan reglas y componentes específicos respetando los contratos existentes. |
+| M01 | Convocatorias | Separar las reglas de vigencia y cronogramas de la persistencia. |
+| M02 | Usuarios | Separar la gestión de datos y cuentas de la consulta externa de identidad. |
+| M03 | Inscripciones | Distinguir coordinación, reglas por modalidad y persistencia. |
+| M04 | Pagos | Utilizar contratos específicos para tarjetas y Yape, separando la verificación del proveedor de las reglas del pago. |
+| M05 | Expedientes | Separar evaluación documental, observaciones y almacenamiento de archivos. |
+| M06 | Exámenes, Sedes y Aulas | Mantener responsabilidades diferenciadas para programación, capacidad y asignación dentro del mismo módulo. |
+| M07 | Resultados | Separar cálculo de puntajes, validación, autorización y publicación. |
+| M08 | Chatbot IA | Separar consultas autorizadas, coordinación del asistente y comunicación con OpenRouter. |
+| M09 | Notificaciones | Separar la preparación de mensajes, el procesamiento de eventos y el envío mediante SES. |
+| M10 | Reportes | Separar consultas autorizadas, elaboración de informes y formatos de salida. |
+| M11 | Seguridad | Diferenciar autenticación, autorización, permisos y registro de auditoría. |
+| M12 | Configuración | Exponer operaciones específicas para administrar parámetros e integraciones. |
 
-## 6. Relación con Clean Architecture y los patrones de diseño
+La agrupación en un mismo módulo no implicará concentrar todas sus funciones en una sola clase.
 
-| Principio | Cómo se aplica en el proyecto |
+## 9.8. Relación con Clean Architecture y los patrones
+
+| Principio | Relación con el diseño |
 |---|---|
-| **Responsabilidad Única** | Separación de responsabilidades entre Presentación, Aplicación, Dominio e Infraestructura. |
-| **Abierto/Cerrado** | Patrón Adaptador para RENIEC, pasarela de pagos y OpenRouter API. |
-| **Sustitución de Liskov** | Implementaciones intercambiables de repositorios y adaptadores que respetan los contratos. |
-| **Segregación de Interfaces** | Interfaces específicas como `InscripcionRepository`, `ElegibilidadPort`, `PaymentPort` y `AiPort`. |
-| **Inversión de Dependencias** | Patrón Repositorio, interfaces del dominio e inyección de dependencias mediante las raíces de composición. |
+| Responsabilidad Única | Separación de funciones entre capas, casos de uso, entidades y adaptadores. |
+| Abierto/Cerrado | Extensión mediante Adaptador y selección de implementaciones mediante Fábrica simple. |
+| Sustitución de Liskov | Contratos de comportamiento verificables para repositorios y adaptadores. |
+| Segregación de Interfaces | Puertos y fachadas definidos según las necesidades de cada consumidor. |
+| Inversión de Dependencias | Repositorios y adaptadores que implementan contratos internos, conectados mediante inyección de dependencias. |
 
-## 7. Aplicación de SOLID en los módulos del sistema
+La publicación de eventos y Outbox complementarán este diseño para comunicar módulos y conservar eventos de forma transaccional. Su uso no demostrará por sí solo el cumplimiento de SOLID.
 
-| Módulo | Aplicación principal de SOLID |
+## 9.9. Criterios de verificación
+
+| Principio | Cómo se verificará |
 |---|---|
-| M01 - Convocatorias | Separar la gestión de convocatorias de su persistencia. |
-| M02 - Usuarios | Desacoplar la validación de identidad del servicio RENIEC. |
-| M03 - Inscripción Ordinaria | Separar reglas de inscripción, casos de uso y repositorios. |
-| M04 - Inscripción Exonerados | Encapsular reglas específicas de las modalidades especiales. |
-| M05 - Pagos | Utilizar interfaces y adaptadores para las pasarelas de pago. |
-| M06 - Expedientes | Separar la evaluación documental del almacenamiento de archivos. |
-| M07 - Exámenes | Encapsular las reglas de programación de evaluaciones. |
-| M08 - Sedes y Aulas | Separar las reglas de asignación y capacidad de aulas. |
-| M09 - Resultados | Mantener independientes el cálculo, validación y publicación de resultados. |
-| M10 - Chatbot IA | Desacoplar los casos de uso del proveedor OpenRouter API. |
-| M11 - Notificaciones | Permitir sustituir proveedores de correo o SMS mediante adaptadores. |
-| M12 - Reportes | Separar la generación de reportes de las consultas y formatos de exportación. |
-| M13 - Seguridad | Separar autenticación, autorización y gestión de roles. |
-| M14 - Configuración | Centralizar la configuración mediante interfaces controladas. |
+| SRP | Revisar que los controladores, casos de uso y adaptadores mantengan responsabilidades coherentes. |
+| OCP | Comprobar que una implementación alternativa pueda incorporarse sin introducir detalles del proveedor en el dominio. |
+| LSP | Ejecutar pruebas de contrato sobre implementaciones intercambiables. |
+| ISP | Revisar que los consumidores no dependan de operaciones que no utilizan. |
+| DIP | Analizar las dependencias y comprobar que las capas internas no importen implementaciones de infraestructura. |
 
-## 8. Beneficios de aplicar SOLID
+Las pruebas de integración verificarán adicionalmente las transacciones, restricciones y comunicaciones reales que no puedan reproducirse fielmente con simulaciones.
 
-- **Mantenibilidad:** facilita modificar funcionalidades sin afectar innecesariamente otros módulos.
-- **Escalabilidad del desarrollo:** permite que diferentes integrantes del equipo trabajen en módulos separados.
-- **Flexibilidad:** facilita cambiar proveedores externos y tecnologías de infraestructura.
-- **Pruebas:** permite utilizar implementaciones simuladas sin depender de servicios reales.
-- **Modularidad:** mantiene responsabilidades y contratos claramente definidos.
-- **Reutilización:** permite compartir contratos y componentes cuando exista una necesidad justificada.
-- **Seguridad:** facilita concentrar las validaciones y controles en los componentes correspondientes.
+## 9.10. Alcance del Sprint 1
 
-## 9. Relación con las decisiones arquitectónicas
+En el Sprint 1 se definirán las responsabilidades por capa, los contratos principales y las reglas de dependencia de los 12 módulos.
 
-| Principio SOLID | Decisión arquitectónica relacionada |
-|---|---|
-| Responsabilidad Única | ADR-001 - Monolito Modular por Capas |
-| Responsabilidad Única | ADR-002 - Clean Architecture |
-| Abierto/Cerrado | ADR-007 - Integración mediante interfaces y adaptadores |
-| Sustitución de Liskov | ADR-007 - Integración mediante interfaces y adaptadores |
-| Segregación de Interfaces | ADR-002 - Clean Architecture |
-| Inversión de Dependencias | ADR-002 - Clean Architecture |
-| Inversión de Dependencias | ADR-004 - Persistencia mediante PostgreSQL |
-| Inversión de Dependencias | ADR-011 - Chatbot inteligente mediante OpenRouter API |
-
-## 10. Resumen
-
-| Aspecto | Descripción |
-|---|---|
-| Proyecto | Sistema Integral de Gestión del Proceso de Admisión – UNSCH |
-| Arquitectura | Monolito Modular por Capas |
-| Enfoque | Clean Architecture |
-| Principios | SRP, OCP, LSP, ISP y DIP |
-| Módulo de referencia | Inscripción Ordinaria |
-| Backend | Node.js + TypeScript + Express |
-| Despliegue | AWS Lambda |
-| Comunicación | API REST mediante HTTPS |
-| Persistencia | Amazon RDS PostgreSQL |
-| Integraciones | RENIEC, pasarela de pagos y OpenRouter API |
-| Patrones relacionados | Adaptador, Repositorio e Inyección de Dependencias |
-
-## 11. Conclusión
-
-La aplicación de los principios SOLID en el Sistema Integral de Gestión del Proceso de Admisión – UNSCH permitirá desarrollar un backend organizado, mantenible y desacoplado de las tecnologías externas.
-
-El módulo Inscripción Ordinaria constituye una referencia para aplicar estos principios en los demás módulos funcionales.
-
-La combinación de **SOLID, Clean Architecture y Monolito Modular por Capas** facilitará la evolución del sistema sin comprometer las reglas de negocio, manteniendo un único backend desplegable mediante AWS Lambda y comunicación segura mediante HTTPS.
-
-**Nota:** Este documento establece los principios y convenciones de diseño propuestos. Su cumplimiento deberá verificarse durante la implementación mediante revisiones de código, pruebas y análisis de dependencias.
+La aplicación de SOLID se verificará durante los siguientes sprints mediante revisiones de código, pruebas y análisis de dependencias, manteniendo la arquitectura de Monolito Modular por Capas con Clean Architecture.
