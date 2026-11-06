@@ -23,8 +23,6 @@ El backend se organizará como un **Monolito Modular por Capas**, aplicando **Cl
 
 ## 2. Diagrama de componentes funcionales
 
-# Diagrama de componentes del backend
-
 Los 12 módulos forman un único backend y se agrupan por responsabilidad.
 
 ```mermaid
