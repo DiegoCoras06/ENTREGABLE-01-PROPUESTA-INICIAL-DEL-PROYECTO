@@ -121,10 +121,4 @@ Además, permite integrar servicios AWS sin la complejidad de administrar múlti
 
 Por estas razones, se considera adecuada para el Sistema Integral de Gestión del Proceso de Admisión UNSCH.
 
-## 6.6. Estado de implementación (02/11/2026)
-
-- Los cuatro grupos de módulos están implementados: **Gestión de admisión** (`convocatorias`, `inscripciones`, `expedientes`), **Gestión académica** (`examenes`, `resultados`), **Gestión administrativa** (`usuarios`, `pagos`, `seguridad`, `configuracion`) y **Servicios complementarios** (`asistente`, `notificaciones`, `reportes`).
-- **Redis y SQS se retiraron del diagrama:** no se usan. La mensajería entre módulos es una bandeja de eventos en PostgreSQL (ADR-008 del repositorio) y Redis queda como opción si la prueba de carga lo justifica.
-- **SMS no se implementó** (opcional según RC16): los avisos van por correo.
-- La pasarela de pagos son dos adaptadores: Izipay micuentaweb para tarjeta y Culqi para Yape.
 

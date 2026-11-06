@@ -130,13 +130,3 @@ Las medidas indicadas son objetivos de validación. Su cumplimiento debe sustent
 
 **Nota:** El objetivo inicial de 200 usuarios simultáneos debe confirmarse según la demanda esperada. Los estados de cumplimiento se documentarán cuando se disponga de evidencias verificables.
 
-## Estado de verificación (02/11/2026)
-
-| Estado | Escenarios |
-|---|---|
-| ✅ Cumplido con evidencia | EQ-04, EQ-06, EQ-08, EQ-09, EQ-10, EQ-11 |
-| 🟡 Parcial | EQ-05, EQ-07, EQ-13, EQ-14, EQ-15 |
-| ⏳ Depende del despliegue en AWS (Paso 11) | EQ-02, EQ-03, EQ-12 |
-| Sin evidencia todavía | EQ-01 (prueba de carga) |
-
-**Nota:** Las medidas propuestas deben aprobarse y validarse mediante pruebas. Los escenarios están alineados con los 15 atributos de calidad AC01–AC15 y las decisiones arquitectónicas del sistema.
