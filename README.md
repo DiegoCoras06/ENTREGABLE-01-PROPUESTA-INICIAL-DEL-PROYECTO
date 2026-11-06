@@ -1,394 +1,287 @@
 # Sistema Integral de Gestión del Proceso de Admisión – UNSCH
 
 > **Curso:** Arquitectura de Software  
-> **Entregable:** ENTREGABLE-01 – PROPUESTA INICIAL DEL PROYECTO  
-> **Universidad:** Universidad Nacional de San Cristóbal de Huamanga (UNSCH)  
-> **Versión:** 1.0  
-> **Estado:** Propuesta y diseño arquitectónico
+> **Entregable:** Entregable 01 – Propuesta Inicial del Proyecto  
+> **Sprint:** 1  
+> **Universidad:** Universidad Nacional de San Cristóbal de Huamanga  
+> **Estado:** Propuesta y diseño arquitectónico inicial  
+> **Año:** 2026
 
----
-
-## 1. Información General
+## 1. Información general
 
 | Campo | Descripción |
 |---|---|
-| **Proyecto** | Sistema Integral de Gestión del Proceso de Admisión – UNSCH |
-| **Integrante** | Diego Alejandro Coras Bendaño |
-| **Universidad** | Universidad Nacional de San Cristóbal de Huamanga |
-| **Curso** | Arquitectura de Software |
-| **Entregable** | Entregable 01 – Propuesta Inicial del Proyecto |
-| **Caso de estudio** | Gestión del proceso de admisión universitaria |
-| **Tipo de solución** | Aplicación web |
-| **Arquitectura propuesta** | Monolito Modular por Capas |
-| **Enfoque interno** | Clean Architecture |
-| **Modelo de documentación** | C4 Model |
-| **Estado del proyecto** | En fase de análisis y diseño |
+| Proyecto | Sistema Integral de Gestión del Proceso de Admisión – UNSCH |
+| Integrante | Diego Alejandro Coras Bendaño |
+| Curso | Arquitectura de Software |
+| Tipo de solución | Aplicación web responsiva |
+| Arquitectura | Monolito Modular por Capas |
+| Enfoque interno | Clean Architecture |
+| Organización funcional | 12 módulos |
+| Documentación arquitectónica | Modelo C4 |
+| Alcance de la entrega | Análisis y diseño inicial |
 
----
+## 2. Descripción del proyecto
 
-## 2. Descripción del Proyecto
+El proyecto propone una solución web para centralizar la gestión del proceso de admisión de la UNSCH.
 
-El proyecto **Sistema Integral de Gestión del Proceso de Admisión – UNSCH** propone el diseño de una solución de software orientada a optimizar y centralizar las actividades relacionadas con el proceso de admisión universitaria.
+Permitirá registrar postulantes, validar su identidad, gestionar inscripciones Ordinaria y Exonerados, procesar pagos, evaluar expedientes, programar exámenes, asignar aulas y publicar resultados autorizados.
 
-La solución permitirá gestionar el registro de postulantes, las inscripciones en diferentes modalidades, la validación de identidad, los pagos, los expedientes documentales, la programación de exámenes y la publicación de resultados.
+También incorporará un chatbot mediante OpenRouter API para brindar orientación y seguimiento autorizado, además de notificaciones por correo electrónico y avisos en el portal.
 
-Asimismo, se contempla la incorporación de un chatbot basado en inteligencia artificial para brindar orientación sobre los procesos de admisión.
+## 3. Caso de estudio
 
-El diseño prioriza la seguridad, mantenibilidad, escalabilidad, disponibilidad e integridad de la información.
+El caso de estudio corresponde al proceso de admisión de la Universidad Nacional de San Cristóbal de Huamanga.
 
----
+**Portal de referencia:** [Admisión UNSCH](https://admision.unsch.edu.pe/)
 
-## 3. Caso de Estudio
+La propuesta comprenderá:
 
-El caso de estudio corresponde al proceso de admisión de la **Universidad Nacional de San Cristóbal de Huamanga (UNSCH)**, tomando como referencia funcional su portal institucional.
-
-**Portal de referencia:**  
-https://admision.unsch.edu.pe/
-
-Se analizarán las funcionalidades relacionadas con:
-
-- Registro de postulantes.
-- Validación de datos personales.
-- Selección de modalidad de admisión.
-- Selección de escuela profesional.
-- Inscripción ordinaria y de exonerados.
-- Gestión de pagos.
-- Presentación y revisión de documentos.
-- Programación de exámenes.
-- Asignación de sedes y aulas.
+- Registro y validación de identidad.
+- Inscripciones Ordinaria y Exonerados.
+- Selección de programas y consulta de vacantes.
+- Pagos con tarjeta y Yape.
+- Presentación y evaluación documental.
+- Programación de exámenes y asignación de aulas.
 - Consulta y publicación de resultados.
-- Generación de reportes.
-- Atención de consultas mediante inteligencia artificial.
+- Reportes, notificaciones y atención mediante chatbot.
 
-> **Nota:** Este proyecto constituye una propuesta académica de arquitectura de software basada en el caso de estudio de la UNSCH. No representa una implementación oficial de la universidad.
+**Naturaleza del proyecto:** propuesta académica de análisis y diseño arquitectónico basada en el proceso de admisión de la UNSCH.
 
----
+## 4. Objetivo general
 
-## 4. Objetivo General
+Diseñar una arquitectura de software para gestionar integralmente el proceso de admisión de la UNSCH mediante un Monolito Modular por Capas con Clean Architecture, que permita organizar sus funcionalidades de manera segura, mantenible y escalable.
 
-Diseñar una propuesta de arquitectura de software para un Sistema Integral de Gestión del Proceso de Admisión de la UNSCH, mediante un enfoque de **Monolito Modular por Capas y Clean Architecture**, que permita organizar los procesos de admisión de manera segura, eficiente, mantenible y escalable.
+## 5. Objetivos específicos
 
----
+1. Identificar actores, historias de usuario y requisitos funcionales.
+2. Definir nueve atributos de calidad y sus escenarios.
+3. Identificar restricciones y drivers arquitectónicos.
+4. Organizar la solución en 12 módulos funcionales.
+5. Establecer las capas, responsabilidades y contratos internos.
+6. Seleccionar las tecnologías e integraciones necesarias.
+7. Representar la arquitectura mediante el modelo C4.
+8. Definir patrones de diseño y principios SOLID.
+9. Documentar las decisiones arquitectónicas que orientarán la implementación.
 
-## 5. Objetivos Específicos
+## 6. Alcance del Sprint 1
 
-1. Identificar los actores que participan en el proceso de admisión universitaria.
-2. Definir las historias de usuario y los requisitos funcionales del sistema.
-3. Identificar los atributos de calidad, restricciones y drivers arquitectónicos.
-4. Establecer los módulos funcionales principales de la solución.
-5. Proponer una arquitectura de software basada en un Monolito Modular por Capas.
-6. Aplicar Clean Architecture para organizar las responsabilidades internas del backend.
-7. Documentar la solución mediante los cuatro niveles del modelo C4.
-8. Identificar los patrones de diseño y principios SOLID aplicables.
-9. Proponer tecnologías de infraestructura e integración con servicios externos.
-
----
-
-## 6. Etapas del Proyecto
-
-### Etapa 1: Análisis del Sistema
-
-En esta etapa se identifican y documentan las necesidades funcionales y no funcionales del sistema.
-
-**Actividades principales:**
-
-- Identificación de actores.
-- Elaboración de historias de usuario.
-- Definición de requisitos funcionales.
-- Identificación de atributos de calidad.
-- Análisis de restricciones.
-- Identificación de drivers arquitectónicos.
-- Definición de escenarios de calidad.
-
-**Resultado esperado:**
-
-Documentación de los requisitos y necesidades que orientarán las decisiones arquitectónicas.
-
-### Etapa 2: Diseño Arquitectónico Inicial
-
-Se desarrolla la propuesta de organización del sistema, estableciendo el estilo arquitectónico, sus capas, módulos y relaciones.
-
-**Actividades principales:**
-
-- Selección del estilo arquitectónico.
-- Definición de la arquitectura por capas.
-- Identificación de los módulos funcionales.
-- Definición de responsabilidades.
-- Identificación de dependencias.
-- Identificación de sistemas externos.
-- Elaboración del diagrama de arquitectura inicial.
-
-**Arquitectura seleccionada:**
-
-**Monolito Modular por Capas**, con enfoque interno de **Clean Architecture**.
-
-### Etapa 3: Diseño Detallado de Software
-
-Se documenta la estructura interna del sistema y las decisiones técnicas necesarias para orientar su implementación.
-
-**Actividades principales:**
-
-- Diseño interno de módulos.
-- Aplicación de patrones de diseño.
-- Aplicación de principios SOLID.
-- Definición de interfaces y contratos.
-- Elaboración de diagramas de clases.
-- Elaboración de diagramas de secuencia.
-- Documentación de decisiones arquitectónicas.
-
-### Etapa 4: Modelado Arquitectónico C4
-
-Se representa la arquitectura utilizando los cuatro niveles del modelo C4.
-
-| Nivel | Diagrama | Descripción |
+| Área | Actividades | Resultado esperado |
 |---|---|---|
-| **Nivel 1** | Contexto del Sistema | Identifica usuarios y sistemas externos. |
-| **Nivel 2** | Contenedores | Representa aplicaciones, backend y almacenes de datos. |
-| **Nivel 3** | Componentes | Describe los módulos internos del backend. |
-| **Nivel 4** | Código | Representa clases, interfaces y relaciones internas. |
+| Análisis | Identificar actores, historias de usuario, requisitos y restricciones. | Alcance funcional documentado. |
+| Calidad | Priorizar atributos y definir escenarios verificables. | Objetivos de calidad establecidos. |
+| Arquitectura inicial | Definir estilo, capas, módulos e integraciones. | Propuesta arquitectónica coherente. |
+| Diseño interno | Proponer contratos, patrones y aplicación de SOLID. | Criterios para organizar el código. |
+| Modelado C4 | Elaborar contexto, contenedores, componentes y ejemplos de código. | Vistas arquitectónicas relacionadas. |
+| Decisiones | Justificar las elecciones técnicas. | Registro inicial de decisiones arquitectónicas. |
 
----
+Los diagramas y contratos representan el diseño propuesto. Su implementación y validación se realizarán progresivamente en los siguientes sprints.
 
-## 7. Arquitectura de Software Propuesta
+## 7. Actores del sistema
 
-El sistema utilizará una arquitectura de **Monolito Modular por Capas**, organizada internamente mediante **Clean Architecture**.
+| Actor | Responsabilidad principal |
+|---|---|
+| Postulante | Inscribirse, pagar, presentar documentos y consultar su proceso. |
+| Personal de Admisión | Gestionar convocatorias, postulantes e inscripciones. |
+| Administrador | Administrar usuarios, permisos y configuración. |
+| Evaluador Documental | Revisar expedientes y registrar observaciones o aprobaciones. |
+| Responsable de Tesorería | Verificar y conciliar pagos. |
+| Coordinador de Exámenes | Programar evaluaciones y asignar ambientes. |
+| Responsable de Resultados | Gestionar calificaciones y publicar resultados autorizados. |
+| Personal de Soporte | Atender consultas e incidencias. |
 
-Esta propuesta permitirá mantener las funcionalidades dentro de una única aplicación backend, separando sus responsabilidades en módulos independientes desde el punto de vista lógico.
+## 8. Arquitectura propuesta
 
-### 7.1. Capas de la Arquitectura
+La solución utilizará un **Monolito Modular por Capas**, con 12 módulos integrados en una misma aplicación backend.
+
+Clean Architecture orientará las dependencias hacia las capas internas, manteniendo las reglas de negocio separadas de PostgreSQL, AWS y los proveedores externos.
+
+### 8.1. Responsabilidades por capa
 
 | Capa | Responsabilidad |
 |---|---|
-| **Presentación** | Gestionar las solicitudes HTTP y las respuestas REST. |
-| **Aplicación** | Coordinar los casos de uso del sistema. |
-| **Dominio** | Contener las entidades y reglas de negocio. |
-| **Infraestructura** | Implementar repositorios, adaptadores e integraciones externas. |
+| Interfaces | Recibir solicitudes, validar entradas y devolver respuestas REST. |
+| Aplicación | Coordinar casos de uso y operaciones transaccionales. |
+| Dominio | Definir entidades, reglas de negocio y contratos propios del dominio. |
+| Infraestructura | Implementar persistencia, archivos, mensajería e integraciones. |
 
-### 7.2. Diagrama General
+Cada módulo comprenderá estas responsabilidades según sus necesidades. Los módulos se comunicarán mediante interfaces públicas y eventos.
+
+### 8.2. Diagrama de dependencias
 
 ```mermaid
 flowchart TB
-    U["Postulantes y Personal UNSCH"]
+    CTRL["Controladores REST"]
 
-    WEB["Aplicación Web<br/>Frontend"]
-
-    API["Amazon API Gateway<br/>HTTPS / REST"]
-
-    subgraph BACKEND["Backend - Monolito Modular en AWS Lambda"]
-        direction TB
-
-        P["Capa de Presentación<br/>Controladores REST"]
-
-        A["Capa de Aplicación<br/>Casos de Uso"]
-
-        D["Capa de Dominio<br/>Entidades y Reglas de Negocio"]
-
-        I["Capa de Infraestructura<br/>Repositorios y Adaptadores"]
-
-        P --> A
-        A --> D
-        A --> I
-        I -.->|"Implementa interfaces"| D
+    subgraph INTERNAS["Capas internas"]
+        UC["Casos de uso"]
+        DOM["Entidades y reglas de negocio"]
+        PORT["Contratos internos"]
+        UC --> DOM
+        UC --> PORT
     end
 
-    DB[("Amazon RDS PostgreSQL")]
-    CACHE[("Redis")]
-    S3[("Amazon S3")]
-    EXT["RENIEC / Pasarela de Pagos<br/>OpenRouter API / Correo"]
+    subgraph INFRA["Infraestructura"]
+        REP["Repositorios PostgreSQL"]
+        ADP["Adaptadores de servicios y archivos"]
+        EVT["Persistencia de eventos Outbox"]
+    end
 
-    U --> WEB
-    WEB -->|"HTTPS"| API
-    API --> P
-
-    I --> DB
-    I --> CACHE
-    I --> S3
-    I -->|"HTTPS"| EXT
-
-    classDef principal fill:#2563eb,color:#fff,stroke:#1d4ed8
-    classDef capa fill:#dbeafe,color:#1e3a8a,stroke:#60a5fa
-    classDef externo fill:#e5e7eb,color:#111827,stroke:#9ca3af
-
-    class U,WEB,API principal
-    class P,A,D,I capa
-    class DB,CACHE,S3,EXT externo
+    CTRL --> UC
+    REP -.->|"Implementan"| PORT
+    ADP -.->|"Implementan"| PORT
+    EVT -.->|"Implementa"| PORT
 ```
 
-> Las flechas del diagrama representan el flujo funcional. Las dependencias del código respetarán las reglas de Clean Architecture.
+Las flechas continuas representan dependencias de uso y las discontinuas representan implementación de contratos.
 
----
+### 8.3. Distribución tecnológica
 
-## 8. Módulos Funcionales
+Angular proporcionará la interfaz web y sus archivos estáticos se distribuirán mediante S3 y CloudFront.
 
-La solución contempla **14 módulos funcionales**.
+Las solicitudes REST llegarán a API Gateway, que invocará el backend en AWS Lambda. La información se almacenará en PostgreSQL y los documentos en S3 privado.
+
+El procesamiento asíncrono utilizará Outbox y SQS. Un procesador con un punto de entrada propio reutilizará el código modular para despachar eventos y ejecutar tareas, sin dividir los módulos en microservicios.
+
+## 9. Módulos funcionales
+
+La solución contempla **12 módulos funcionales**.
 
 | Código | Módulo | Responsabilidad |
 |---|---|---|
-| M01 | Gestión de Convocatorias | Administrar convocatorias, cronogramas y vacantes. |
-| M02 | Usuarios y Validación de Identidad | Gestionar postulantes y verificar datos personales. |
-| M03 | Inscripción Ordinaria | Registrar postulaciones ordinarias. |
-| M04 | Inscripción de Exonerados | Gestionar modalidades especiales de admisión. |
-| M05 | Gestión de Pagos | Administrar órdenes y confirmaciones de pago. |
-| M06 | Gestión de Expedientes | Gestionar documentos y evaluaciones documentales. |
-| M07 | Programación de Exámenes | Organizar las evaluaciones de admisión. |
-| M08 | Gestión de Sedes y Aulas | Administrar ambientes y asignaciones. |
-| M09 | Gestión de Resultados | Procesar y publicar resultados autorizados. |
-| M10 | Chatbot con Inteligencia Artificial | Atender consultas mediante IA. |
-| M11 | Gestión de Notificaciones | Enviar confirmaciones y avisos. |
-| M12 | Reportes y Estadísticas | Generar información administrativa. |
-| M13 | Seguridad y Roles | Gestionar autenticación, permisos y auditoría. |
-| M14 | Configuración e Integraciones | Administrar parámetros y servicios externos. |
+| M01 | Gestión de Convocatorias | Administrar convocatorias, cronogramas y condiciones del proceso. |
+| M02 | Usuarios y Validación de Identidad | Gestionar datos de postulantes y usuarios y coordinar la consulta de identidad. |
+| M03 | Inscripciones | Gestionar Ordinaria y Exonerados, sus requisitos, estados y fichas. |
+| M04 | Gestión de Pagos | Administrar órdenes, confirmaciones y conciliaciones de pagos con tarjeta y Yape. |
+| M05 | Gestión de Expedientes | Administrar documentos, evaluaciones, observaciones y subsanaciones. |
+| M06 | Exámenes, Sedes y Aulas | Programar evaluaciones y asignar ambientes respetando horarios y capacidades. |
+| M07 | Gestión de Resultados | Procesar calificaciones y gestionar resultados validados y autorizados. |
+| M08 | Chatbot con Inteligencia Artificial | Brindar orientación, seguimiento autorizado y derivación a soporte. |
+| M09 | Gestión de Notificaciones | Gestionar avisos en el portal y correos mediante Amazon SES. |
+| M10 | Reportes y Estadísticas | Generar informes e indicadores del proceso. |
+| M11 | Seguridad y Roles | Gestionar autenticación, autorización, permisos y consulta de auditoría. |
+| M12 | Configuración e Integraciones | Administrar modalidades, programas, vacantes, parámetros e integraciones. |
 
----
+## 10. Tecnologías seleccionadas
 
-## 9. Tecnologías Propuestas
-
-| Componente | Tecnología |
+| Componente | Tecnología y función |
 |---|---|
-| Frontend | Aplicación web SPA (framework por definir) |
-| Backend | Node.js + TypeScript + Express |
-| Arquitectura | Monolito Modular por Capas |
-| Enfoque | Clean Architecture |
-| API | REST mediante HTTPS |
-| Ejecución del backend | AWS Lambda |
-| Entrada de solicitudes | Amazon API Gateway |
-| Base de datos | Amazon RDS PostgreSQL |
-| Gestión de conexiones | Amazon RDS Proxy |
-| Caché | Redis mediante Amazon ElastiCache |
-| Almacenamiento de archivos | Amazon S3 |
-| Mensajería | Amazon SQS |
-| Distribución web | Amazon CloudFront |
-| Gestión de secretos | AWS Secrets Manager |
-| Monitoreo | Amazon CloudWatch |
-| DNS | Amazon Route 53 |
-| Certificados | AWS Certificate Manager |
-| Inteligencia artificial | OpenRouter API |
-| Control de versiones | Git y GitHub |
+| Frontend | Angular para el portal responsivo y el panel administrativo. |
+| Backend | Node.js, TypeScript y Express. |
+| API | Endpoints REST mediante HTTPS. |
+| Ejecución | AWS Lambda para la API y el procesamiento asíncrono. |
+| Acceso a la API | Amazon API Gateway. |
+| Base de datos | Amazon RDS PostgreSQL. |
+| Frontend estático | Amazon S3 y CloudFront. |
+| Caché pública | Caché HTTP mediante CloudFront. |
+| Documentos | Amazon S3 privado con acceso autorizado. |
+| Eventos transaccionales | Outbox dentro de PostgreSQL. |
+| Mensajería | Amazon SQS. |
+| Correo electrónico | Amazon SES. |
+| Chatbot | OpenRouter API. |
+| Control de versiones | Git y GitHub. |
 
-> Estas tecnologías forman parte del diseño propuesto y están sujetas a validación durante las siguientes etapas del proyecto.
+Los parámetros de concurrencia, permisos, respaldos y activación de tareas se detallarán en el diseño de despliegue.
 
----
+## 11. Integraciones externas
 
-## 10. Sistemas Externos
-
-| Sistema | Función |
+| Servicio | Función |
 |---|---|
-| **RENIEC** | Validación de identidad de postulantes mediante acceso autorizado. |
-| **Pasarela de Pagos** | Procesamiento y confirmación de pagos de inscripción. |
-| **OpenRouter API** | Integración del chatbot con modelos de inteligencia artificial. |
-| **Servicio de Correo** | Envío de notificaciones y confirmaciones. |
-| **Servicio SMS** | Envío opcional de avisos y recordatorios. |
+| Consulta de identidad vía apiperu | Verificar datos vinculados a RENIEC, conforme a las condiciones de acceso aplicables. |
+| Izipay micuentaweb | Procesar pagos con tarjeta y verificar su estado. |
+| Culqi | Procesar pagos con Yape y consultar su resultado. |
+| OpenRouter API | Obtener respuestas para el chatbot. |
+| Amazon SES | Enviar confirmaciones y notificaciones por correo electrónico. |
 
----
+Las credenciales permanecerán en el backend. Los adaptadores normalizarán las respuestas y gestionarán errores de los proveedores.
 
-## 11. Patrones y Principios de Diseño
+## 12. Patrones y mecanismos de diseño
 
-### Patrones de Diseño
+| Patrón o mecanismo | Aplicación |
+|---|---|
+| Adaptador | Aislar las integraciones de identidad, pagos, IA, correo y archivos. |
+| Repositorio | Separar los casos de uso de la persistencia concreta. |
+| Fábrica simple | Seleccionar y construir adaptadores según la configuración. |
+| Inyección de dependencias | Proporcionar implementaciones mediante contratos internos. |
+| Fachada | Exponer operaciones públicas de cada módulo. |
+| Observer y publicación de eventos | Permitir que los consumidores reaccionen a cambios de negocio. |
+| Transactional Outbox | Guardar eventos junto con la operación que los produce. |
 
-Se consideran los siguientes patrones:
-
-- **Adaptador:** integración con servicios externos.
-- **Repositorio:** separación entre reglas de negocio y persistencia.
-- **Decorador:** incorporación de caché mediante Redis.
-- **Inyección de Dependencias:** desacoplamiento entre interfaces e implementaciones.
-- **Fachada:** comunicación controlada entre módulos.
-
-También se contempla evaluar los patrones Observer, Factory y Strategy según las necesidades de implementación.
+El despacho de eventos se apoyará en SQS y consumidores idempotentes. Un fallo de notificación no revertirá una inscripción o un pago confirmado.
 
 ### Principios SOLID
 
-| Principio | Aplicación |
+| Principio | Aplicación propuesta |
 |---|---|
-| **S - Responsabilidad Única** | Cada clase cumple una responsabilidad definida. |
-| **O - Abierto/Cerrado** | Se incorporan nuevas implementaciones mediante extensiones. |
-| **L - Sustitución de Liskov** | Los adaptadores respetan los contratos establecidos. |
-| **I - Segregación de Interfaces** | Cada módulo utiliza interfaces específicas. |
-| **D - Inversión de Dependencias** | Los casos de uso dependen de abstracciones. |
+| Responsabilidad Única | Mantener responsabilidades coherentes en controladores, casos de uso, entidades y adaptadores. |
+| Abierto/Cerrado | Facilitar extensiones mediante contratos y adaptadores. |
+| Sustitución de Liskov | Mantener el comportamiento esperado al sustituir implementaciones compatibles. |
+| Segregación de Interfaces | Definir contratos según las necesidades del consumidor. |
+| Inversión de Dependencias | Hacer que los casos de uso dependan de abstracciones. |
 
----
+## 13. Atributos de calidad prioritarios
 
-## 12. Atributos de Calidad
+Se trabajará con **nueve atributos de calidad**.
 
-La propuesta considera los siguientes atributos:
+| ID | Atributo | Objetivo principal |
+|---|---|---|
+| AC01 | Rendimiento | Lograr que al menos el 95 % de las solicitudes habituales responda en un máximo de 3 segundos bajo carga normal, excluyendo demoras externas. |
+| AC02 | Disponibilidad | Alcanzar una disponibilidad objetivo del 99.9 % durante los periodos críticos. |
+| AC03 | Escalabilidad | Ampliar la capacidad de atención manteniendo los objetivos de rendimiento y controlando las conexiones a PostgreSQL. |
+| AC04 | Seguridad | Proteger datos y operaciones mediante autenticación, autorización, HTTPS y protección de credenciales. |
+| AC05 | Mantenibilidad | Modificar funcionalidades respetando los límites de los módulos y las dependencias internas. |
+| AC06 | Integridad | Evitar registros duplicados e inconsistencias mediante restricciones, transacciones e idempotencia. |
+| AC07 | Usabilidad | Permitir que al menos el 90 % de los participantes de una prueba complete las tareas principales sin asistencia. |
+| AC08 | Interoperabilidad | Intercambiar información con proveedores y gestionar resultados o errores controlados. |
+| AC09 | Confiabilidad | Conservar operaciones confirmadas y admitir reintentos sin duplicar transacciones. |
 
-- Rendimiento.
-- Disponibilidad.
-- Escalabilidad.
-- Seguridad.
-- Mantenibilidad.
-- Integridad.
-- Usabilidad.
-- Interoperabilidad.
-- Confiabilidad.
-- Auditabilidad.
-- Privacidad.
-- Recuperabilidad.
-- Accesibilidad.
-- Observabilidad.
-- Modularidad.
+Estos objetivos se validarán mediante pruebas de carga, integración, seguridad, usabilidad y escenarios de falla.
 
-Estos atributos servirán para establecer escenarios de calidad y evaluar las decisiones arquitectónicas.
+## 14. Reglas principales del diseño
 
----
+1. La identidad se validará antes de habilitar el pago.
+2. La inscripción comprenderá Ordinaria y Exonerados con sus reglas particulares.
+3. La cuenta del postulante será opcional; las consultas personales requerirán verificación de acceso.
+4. Los importes y las confirmaciones de pago se comprobarán en el backend.
+5. Los pagos con resultado incierto permanecerán pendientes de verificación.
+6. La habilitación exigirá cumplir los requisitos de pago y documentación correspondientes.
+7. Los resultados se publicarán después de su validación y autorización.
+8. Los módulos accederán a otros mediante interfaces públicas o eventos.
+9. Las respuestas con información personal no se almacenarán en cachés públicas.
+10. El chatbot consultará únicamente información autorizada y enviará datos mínimos al proveedor.
 
-## 13. Documentación Arquitectónica
-
-La documentación del proyecto contempla los siguientes apartados:
+## 15. Documentación arquitectónica
 
 | Documento | Contenido |
 |---|---|
-| Análisis del Sistema | Actores, historias de usuario y requisitos. |
-| Atributos de Calidad | Características de calidad y escenarios. |
-| Drivers Arquitectónicos | Factores que condicionan el diseño. |
-| Decisiones Arquitectónicas | Registro y justificación de decisiones (ADR). |
-| Diseño Interno de Módulos | Organización de clases, interfaces y capas. |
-| Patrones de Diseño | Patrones aplicados en el backend. |
-| Principios SOLID | Aplicación de principios de diseño. |
-| C4 - Nivel 1 | Diagrama de contexto del sistema. |
-| C4 - Nivel 2 | Diagrama de contenedores. |
-| C4 - Nivel 3 | Diagrama de componentes. |
-| C4 - Nivel 4 | Diagrama de código. |
+| Actores e historias de usuario | Personas, responsabilidades y necesidades. |
+| Requisitos funcionales | Comportamientos esperados del sistema. |
+| Atributos y escenarios de calidad | Nueve atributos y criterios de validación. |
+| Restricciones y drivers | Condiciones que orientan el diseño. |
+| Decisiones arquitectónicas | Elecciones técnicas y justificaciones. |
+| Arquitectura inicial | Estilo, capas, tecnologías e integraciones. |
+| Diseño interno | Responsabilidades y contratos de los 12 módulos. |
+| Patrones y SOLID | Criterios de organización y dependencias. |
+| C4 nivel 1 | Usuarios y sistemas externos. |
+| C4 nivel 2 | Aplicaciones, almacenes de datos y comunicaciones. |
+| C4 nivel 3 | Componentes funcionales del backend. |
+| C4 nivel 4 | Clases e interfaces propuestas para Inscripciones y Pagos. |
 
----
+## 16. Resultados esperados del Sprint 1
 
-## 14. Resultados Esperados
+1. Alcance y actores identificados.
+2. Historias de usuario y requisitos documentados.
+3. Nueve atributos de calidad priorizados.
+4. Doce módulos con responsabilidades definidas.
+5. Arquitectura inicial y decisiones justificadas.
+6. Diagramas C4 coherentes entre sí.
+7. Contratos, patrones y principios de diseño establecidos.
+8. Base técnica para orientar los siguientes sprints.
 
-Al finalizar las etapas de análisis y diseño arquitectónico, se espera contar con:
+## 17. Autor
 
-1. Una definición clara del alcance del sistema.
-2. Requisitos funcionales y atributos de calidad documentados.
-3. Identificación de los actores y sus responsabilidades.
-4. Una propuesta de arquitectura coherente con las necesidades del sistema.
-5. Una estructura modular para organizar el backend.
-6. Diagramas arquitectónicos elaborados mediante el modelo C4.
-7. Patrones de diseño y principios SOLID documentados.
-8. Decisiones arquitectónicas justificadas.
-9. Una base técnica para orientar una futura implementación.
-
----
-
-## 15. Conclusión
-
-El proyecto **Sistema Integral de Gestión del Proceso de Admisión – UNSCH** propone una solución tecnológica orientada a centralizar y mejorar la gestión de los procesos de admisión universitaria.
-
-La arquitectura seleccionada, basada en un **Monolito Modular por Capas** y **Clean Architecture**, busca garantizar una organización clara de responsabilidades, reducir el acoplamiento y facilitar el mantenimiento y evolución del sistema.
-
-Asimismo, la utilización del modelo **C4**, los patrones de diseño y los principios **SOLID** permitirá documentar la solución de manera estructurada y proporcionar una referencia técnica para su posterior desarrollo.
-
----
-
-## 16. Autor
-
-**Diego Alejandro Coras Bendaño**
-
-**Universidad Nacional de San Cristóbal de Huamanga – UNSCH**
-
-**Curso:** Arquitectura de Software
-
-**Entregable:** ENTREGABLE-01 – PROPUESTA INICIAL DEL PROYECTO
-
-**Año:** 2026
-
----
-
-*Proyecto académico desarrollado con fines de análisis y diseño de arquitectura de software.*
+**Diego Alejandro Coras Bendaño**  
+Universidad Nacional de San Cristóbal de Huamanga  
+Curso: Arquitectura de Software  
+Entregable 01 – Propuesta Inicial del Proyecto  
+Año: 2026
