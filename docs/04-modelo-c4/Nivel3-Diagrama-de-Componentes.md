@@ -23,63 +23,64 @@ El backend se organizará como un **Monolito Modular por Capas**, aplicando **Cl
 
 ## 2. Diagrama de componentes funcionales
 
-Los grupos del diagrama facilitan la lectura y no representan aplicaciones ni unidades de despliegue independientes.
+# Diagrama de componentes del backend
+
+Los 12 módulos forman un único backend y se agrupan por responsabilidad.
 
 ```mermaid
 flowchart TB
-    WEB["Aplicación web Angular"]
+    WEB["Aplicación web · Angular"]
+    API["API Gateway · HTTPS"]
 
-    subgraph BACKEND["Backend API REST: Monolito Modular"]
-        HTTP["Controladores REST y control de acceso"]
+    subgraph BACKEND["Backend · Monolito Modular"]
+        direction TB
+        REST["Controladores REST · Casos de uso"]
 
-        subgraph ADMISION["Gestión de admisión"]
-            M01["M01 Convocatorias"]
-            M03["M03 Inscripciones"]
-            M05["M05 Expedientes"]
+        subgraph FUNCIONALES["Módulos funcionales"]
+            direction TB
+            ADM["ADMISIÓN
+            M01 Convocatorias · M03 Inscripciones
+            M05 Expedientes"]
+
+            ACA["EVALUACIÓN
+            M06 Exámenes, Sedes y Aulas
+            M07 Resultados"]
+
+            GES["ADMINISTRACIÓN
+            M02 Usuarios · M04 Pagos
+            M12 Configuración"]
+
+            SER["SERVICIOS
+            M08 Chatbot IA · M09 Notificaciones
+            M10 Reportes"]
         end
 
-        subgraph ACADEMICA["Gestión académica"]
-            M06["M06 Exámenes, Sedes y Aulas"]
-            M07["M07 Resultados"]
-        end
+        SEG["M11 Seguridad · Autenticación y permisos"]
 
-        subgraph ADMINISTRATIVA["Gestión administrativa"]
-            M02["M02 Usuarios"]
-            M04["M04 Pagos"]
-            M11["M11 Seguridad"]
-            M12["M12 Configuración"]
-        end
-
-        subgraph COMPLEMENTARIOS["Servicios complementarios"]
-            M08["M08 Chatbot IA"]
-            M09["M09 Notificaciones"]
-            M10["M10 Reportes"]
-        end
-
-        HTTP -->|"Verifica identidad y permisos"| M11
-        HTTP -->|"Registro y seguimiento"| M03
-        HTTP -->|"Operaciones de pago"| M04
-        HTTP -->|"Programación y asignaciones"| M06
-        HTTP -->|"Consulta y publicación"| M07
-        HTTP -->|"Orientación"| M08
-        HTTP -->|"Gestión de convocatorias"| M01
-        HTTP -->|"Evaluación documental"| M05
-        HTTP -->|"Gestión de usuarios"| M02
-        HTTP -->|"Consulta de avisos"| M09
-        HTTP -->|"Informes autorizados"| M10
-        HTTP -->|"Parámetros del sistema"| M12
-
-        M03 -->|"Consulta condiciones"| M01
-        M03 -->|"Consulta datos del postulante"| M02
-        M05 -->|"Consulta inscripción"| M03
-        M06 -->|"Consulta postulantes habilitados"| M03
-        M07 -->|"Consulta evaluaciones"| M06
-        M08 -->|"Consulta información pública"| M01
-        M10 -->|"Consulta estadísticas autorizadas"| M07
+        REST --> ADM
+        REST --> ACA
+        REST --> GES
+        REST --> SER
+        REST -.->|"Verifica acceso"| SEG
     end
 
-    WEB -->|"HTTPS y JSON mediante API Gateway"| HTTP
+    WEB --> API --> REST
+
+    classDef entrada fill:#0f172a,color:#ffffff,stroke:#0f172a
+    classDef acceso fill:#2563eb,color:#ffffff,stroke:#1d4ed8
+    classDef modulo fill:#eff6ff,color:#1e3a8a,stroke:#93c5fd
+    classDef seguridad fill:#f0fdf4,color:#14532d,stroke:#86efac
+
+    class WEB entrada
+    class API,REST acceso
+    class ADM,ACA,GES,SER modulo
+    class SEG seguridad
+
+    style BACKEND fill:#f8fafc,stroke:#94a3b8
+    style FUNCIONALES fill:#ffffff,stroke:#e2e8f0
 ```
+
+**Nota:** Los grupos representan una organización lógica dentro del monolito, no aplicaciones ni unidades de despliegue independientes.
 
 Las conexiones representan relaciones funcionales seleccionadas. Las llamadas entre módulos utilizarán sus interfaces públicas; cada operación estará sujeta a los permisos correspondientes.
 
@@ -227,23 +228,4 @@ Los contratos se ubicarán en la capa interna que los necesite. La carpeta compa
 | Publicación y suscripción | Reacción de módulos a eventos de negocio. | Reducir el acoplamiento entre productores y consumidores. |
 | Transactional Outbox | Persistencia conjunta de cambios y eventos. | Evitar confirmar operaciones sin conservar su evento asociado. |
 
-## 11. Alcance del Sprint 1
 
-Esta vista define los 12 componentes funcionales del backend, sus responsabilidades y sus principales relaciones.
-
-Las clases, los métodos y los contratos detallados de los componentes seleccionados se desarrollarán en el nivel 4 y durante los siguientes sprints.
-
----
-
-## 9. Estado de cumplimiento de las reglas (02/11/2026)
-
-| Regla | Estado |
-|---|---|
-| 1. Un único backend desplegable | ✅ Un backend con dos puntos de entrada en Lambda: API (`lambda-api.ts`) y tareas (`lambda-worker.ts`) |
-| 2. Comunicación solo por la API pública (`index.ts`) | ✅ Ningún módulo importa capas internas de otro |
-| 3. Cada módulo usa solo sus tablas | 🟡 Un esquema de PostgreSQL por módulo; `reportes` lee tablas de otros módulos (solo lectura, para los indicadores) y hay algunas lecturas cruzadas, como `inscripciones` sobre resultados |
-| 4. Integraciones con interfaces y adaptadores | ✅ |
-| 5. Clean Architecture por módulo | 🟡 Capas presentes; la persistencia aún no está detrás de repositorios en la mayoría de módulos |
-| 6. Casos de uso dependen de interfaces | 🟡 Sí para los servicios externos; no para la base de datos |
-| 7. Controladores sin acceso directo a datos | ✅ |
-| 8. Integridad e idempotencia en inscripción y pago | ✅ |

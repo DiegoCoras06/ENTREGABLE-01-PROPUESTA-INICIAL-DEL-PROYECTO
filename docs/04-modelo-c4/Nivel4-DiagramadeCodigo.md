@@ -345,8 +345,3 @@ Notificaciones procesará los eventos que le correspondan mediante su propio con
 | Segregación de Interfaces | Contratos específicos para consultas, repositorios y métodos de pago. |
 | Inversión de Dependencias | Casos de uso independientes de PostgreSQL y proveedores concretos. |
 
-## 12. Alcance del Sprint 1
-
-Este documento define el diseño inicial de código para M03 Inscripciones y M04 Pagos.
-
-Los nombres definitivos, tipos de datos, estados, contratos de error y detalles de las pasarelas se precisarán durante la implementación y se validarán mediante pruebas de dominio, contrato e integración.

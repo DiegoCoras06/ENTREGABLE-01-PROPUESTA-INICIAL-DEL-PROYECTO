@@ -185,8 +185,3 @@ La publicación de eventos y Outbox complementarán este diseño para comunicar 
 
 Las pruebas de integración verificarán adicionalmente las transacciones, restricciones y comunicaciones reales que no puedan reproducirse fielmente con simulaciones.
 
-## 9.10. Alcance del Sprint 1
-
-En el Sprint 1 se definirán las responsabilidades por capa, los contratos principales y las reglas de dependencia de los 12 módulos.
-
-La aplicación de SOLID se verificará durante los siguientes sprints mediante revisiones de código, pruebas y análisis de dependencias, manteniendo la arquitectura de Monolito Modular por Capas con Clean Architecture.

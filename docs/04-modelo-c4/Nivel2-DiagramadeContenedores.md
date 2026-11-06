@@ -198,22 +198,4 @@ Las respuestas con datos personales, estados de pago o información administrati
 
 La concurrencia del procesamiento se limitará según la capacidad de PostgreSQL y de los servicios externos.
 
-## 11. Alcance del Sprint 1
 
-En el Sprint 1 se definirán los contenedores, sus responsabilidades, las tecnologías y sus relaciones principales.
-
-Los permisos de infraestructura, parámetros de concurrencia, políticas de reintento, respaldos y mecanismos de activación se detallarán durante los siguientes sprints y en la vista de despliegue.
----
-
-## 7. Estado de implementación (02/11/2026)
-
-| Contenedor | Estado |
-|---|---|
-| Aplicación Web (Angular) | ✅ Implementada; se publica en S3 + CloudFront en el Paso 11 |
-| Backend API REST | ✅ Implementado (`server.ts` en local, `lambda-api.ts` para Lambda) |
-| Worker de tareas | ✅ Código listo (`lambda-worker.ts`); en local las tareas corren en el mismo proceso |
-| Base de datos | ✅ Amazon RDS PostgreSQL en uso |
-| Almacenamiento de archivos | ✅ Amazon S3 en uso |
-| API Gateway, CloudFront, Route 53, ACM | ⏳ Paso 11 |
-
-Esta versión reemplaza Redis y Amazon SQS de la propuesta inicial; el motivo de cada cambio está en `01-analisis-del-sistema/07-decisiones-arquitectonicas.md`.
